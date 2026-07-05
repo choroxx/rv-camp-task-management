@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>合宿コントロールルーム</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Noto+Sans+JP:wght@400;500;700;900&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#15141a;
+    --surface:#1e1d25;
+    --surface-2:#26242f;
+    --border:#37353f;
+    --text:#f5f3ee;
+    --text-muted:#9c9aa8;
+    --accent:#f2b134;
+    --accent-dim:#7a5c1c;
+    --success:#4caf7d;
+    --success-bg:#1c2b23;
+    --info:#6c8ef2;
+    --info-bg:#1c2436;
+    --purple:#a78bfa;
+    --purple-bg:#241f36;
+    --danger:#e5555c;
+    --danger-bg:#301c1f;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--text);
+    font-family:'Noto Sans JP', sans-serif;
+    line-height:1.6;
+  }
+  .display{font-family:'Bebas Neue', sans-serif; letter-spacing:0.04em;}
+  .mono{font-family:'JetBrains Mono', monospace;}
+  .wrap{max-width:760px; margin:0 auto; padding:32px 20px 64px;}
+  .eyebrow{
+    font-size:13px; letter-spacing:0.16em; color:var(--accent);
+    display:flex; align-items:center; gap:8px; margin-bottom:6px;
+  }
+  .eyebrow::before{content:""; width:8px; height:8px; border-radius:50%; background:var(--accent); display:inline-block;}
+  h1.display{font-size:34px; margin:0 0 24px; color:var(--text);}
+  .stat-row{
+    display:grid; grid-template-columns:repeat(4, 1fr); gap:10px; margin-bottom:20px;
+  }
+  .stat-card{
+    background:var(--surface); border:1px solid var(--border); border-radius:10px;
+    padding:14px 12px;
+  }
+  .stat-card .label{font-size:12px; color:var(--text-muted); margin-bottom:4px;}
+  .stat-card .value{font-size:26px; font-weight:700;}
+  .mvp-pass{
+    position:relative;
+    background:var(--surface);
+    border:1px dashed var(--accent-dim);
+    border-radius:14px;
+    padding:22px 24px 20px;
+    margin-bottom:24px;
+    display:flex; gap:16px; align-items:flex-start;
+  }
+  .mvp-pass::before{
+    content:"";
+    position:absolute; top:-8px; left:50%; transform:translateX(-50%);
+    width:16px; height:16px; border-radius:50%;
+    background:var(--bg); border:1px dashed var(--accent-dim);
+  }
+  .mvp-avatar{
+    width:48px; height:48px; border-radius:50%;
+    background:var(--accent); color:#241b06;
+    display:flex; align-items:center; justify-content:center;
+    font-weight:700; font-size:18px; flex-shrink:0;
+  }
+  .mvp-tag{font-size:12px; letter-spacing:0.12em; color:var(--accent); margin:0 0 4px;}
+  .mvp-name{font-size:18px; font-weight:700; margin:0 0 4px;}
+  .mvp-comment{font-size:14px; color:var(--text-muted); margin:0 0 12px;}
+  .cheer-btn{
+    background:var(--surface-2); border:1px solid var(--border); color:var(--text);
+    border-radius:8px; padding:7px 14px; font-size:13px; cursor:pointer;
+    display:inline-flex; align-items:center; gap:6px;
+  }
+  .cheer-btn:hover{border-color:var(--accent);}
+  .cheer-btn.active{background:var(--accent); color:#241b06; border-color:var(--accent);}
+  .tabs{display:flex; gap:6px; margin-bottom:18px; flex-wrap:wrap;}
+  .tab-btn{
+    background:transparent; border:1px solid var(--border); color:var(--text-muted);
+    border-radius:20px; padding:8px 16px; font-size:13px; cursor:pointer;
+    font-family:'Noto Sans JP', sans-serif;
+  }
+  .tab-btn.active{background:var(--surface-2); color:var(--text); border-color:var(--accent);}
+  .panel{display:none;}
+  .panel.active{display:block;}
+  .phase-card{
+    background:var(--surface); border:1px solid var(--border); border-radius:10px;
+    margin-bottom:10px; overflow:hidden;
+  }
+  .phase-head{padding:14px 16px; cursor:pointer;}
+  .phase-top{display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;}
+  .phase-name{font-size:14px; font-weight:500; display:flex; align-items:center; gap:6px;}
+  .badge{font-size:11px; padding:3px 10px; border-radius:20px;}
+  .badge.done{background:var(--success-bg); color:var(--success);}
+  .badge.doing{background:var(--info-bg); color:var(--info);}
+  .badge.todo{background:var(--surface-2); color:var(--text-muted);}
+  .badge.add{background:var(--info-bg); color:var(--info);}
+  .badge.missing{background:var(--danger-bg); color:var(--danger);}
+  .badge.option{background:var(--purple-bg); color:var(--purple);}
+  .bar-track{flex:1; height:6px; background:var(--surface-2); border-radius:4px; overflow:hidden;}
+  .bar-fill{height:100%;}
+  .bar-fill.done{background:var(--success);}
+  .bar-fill.doing{background:var(--info);}
+  .bar-fill.todo{background:var(--border);}
+  .phase-bottom{display:flex; align-items:center; gap:10px;}
+  .task-list{border-top:1px solid var(--border); padding:10px 16px 14px; display:flex; flex-direction:column; gap:8px;}
+  .task-item{display:flex; align-items:center; gap:8px; font-size:13px; cursor:pointer;}
+  .task-item input{accent-color:var(--accent);}
+  .task-item.done span{color:var(--text-muted); text-decoration:line-through;}
+  .card{
+    background:var(--surface); border:1px solid var(--border); border-radius:10px;
+    padding:14px 16px; margin-bottom:10px;
+  }
+  select, textarea, input[type=text]{
+    background:var(--surface-2); border:1px solid var(--border); color:var(--text);
+    border-radius:8px; padding:9px 10px; font-size:14px; font-family:inherit; width:100%;
+  }
+  textarea{resize:vertical;}
+  .form-card{background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:14px 16px; margin-bottom:16px;}
+  .row{display:flex; gap:8px;}
+  .send-btn{
+    background:var(--accent); color:#241b06; border:none; border-radius:8px;
+    padding:9px 16px; font-size:13px; font-weight:700; cursor:pointer; margin-top:8px;
+  }
+  .feed-name{font-size:14px; font-weight:500;}
+  .feed-time{font-size:12px; color:var(--text-muted);}
+  .tag-pill{font-size:11px; padding:3px 10px; border-radius:20px; background:var(--surface-2); color:var(--text-muted); display:inline-block; margin:6px 0;}
+  .board-row{display:flex; align-items:center; gap:12px; padding:10px 4px; border-bottom:1px solid var(--border);}
+  .rank{font-family:'Bebas Neue', sans-serif; font-size:20px; color:var(--text-muted); width:22px;}
+  .avatar-sm{width:34px; height:34px; border-radius:50%; background:var(--info-bg); color:var(--info); display:flex; align-items:center; justify-content:center; font-weight:700; font-size:13px; flex-shrink:0;}
+  .board-name{font-size:14px; font-weight:500;}
+  .board-role{font-size:12px; color:var(--text-muted);}
+  .streak{font-size:13px; color:var(--accent); display:flex; align-items:center; gap:4px;}
+  .pts{font-size:14px; font-weight:700; min-width:52px; text-align:right;}
+  .chat-thread{display:flex; flex-direction:column; gap:10px; max-height:220px; overflow-y:auto; margin-bottom:12px;}
+  .bubble-row{display:flex; gap:8px; align-items:flex-start;}
+  .bubble-row.user{flex-direction:row-reverse;}
+  .bubble-icon{width:24px; height:24px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:12px; flex-shrink:0;}
+  .bubble{border-radius:12px; padding:8px 12px; font-size:13px; max-width:78%;}
+  .bubble.bot{background:var(--surface-2);}
+  .bubble.user{background:var(--info-bg); color:var(--info);}
+  .qa-taskify-row{display:flex; gap:8px; margin-top:8px;}
+  .qa-taskify-row select{flex:1; font-size:12px; padding:6px 8px;}
+  .qa-taskify-row button{font-size:12px; padding:6px 10px; background:var(--surface-2); border:1px solid var(--border); color:var(--text); border-radius:8px; cursor:pointer;}
+  .converted{font-size:12px; color:var(--success); margin-top:6px;}
+  .note{font-size:12px; color:var(--text-muted); margin-top:24px; border-top:1px solid var(--border); padding-top:14px;}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <p class="eyebrow">GASSHUKU CONTROL ROOM</p>
+  <h1 class="display">合宿 準備ダッシュボード</h1>
+
+  <div class="stat-row">
+    <div class="stat-card"><p class="label">合宿まで</p><p class="value display">12<span style="font-size:14px; margin-left:4px;">日</span></p></div>
+    <div class="stat-card"><p class="label">全体進捗</p><p class="value mono" id="overall-pct">-</p></div>
+    <div class="stat-card"><p class="label">本日の投稿</p><p class="value mono">6</p></div>
+    <div class="stat-card"><p class="label">未対応の提案</p><p class="value mono" id="qa-pending-count">-</p></div>
+  </div>
+
+  <div class="mvp-pass">
+    <div class="mvp-avatar">佐</div>
+    <div style="flex:1;">
+      <p class="mvp-tag display">TODAY'S MVP</p>
+      <p class="mvp-name">佐藤（デザイン担当）</p>
+      <p class="mvp-comment">会場の動線図を一晩で仕上げてくれました</p>
+      <div style="display:flex; align-items:center; gap:8px;">
+        <button class="cheer-btn" id="mvp-cheer">♥ <span id="mvp-count">18</span></button>
+        <span style="font-size:12px; color:var(--text-muted);">からの称賛</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab-btn active" data-tab="Daily-comments">今日の一言 ※中崎リーダーの今日の格言</button>
+    <button class="tab-btn active" data-tab="progress">進捗管理</button>
+    <button class="tab-btn" data-tab="daily">今日の実績</button>
+    <button class="tab-btn" data-tab="board">称賛ボード</button>
+    <button class="tab-btn" data-tab="qa">作業提案・Q&A</button>
+  </div>
+
+  <div class="panel active" id="panel-progress"></div>
+  <div class="panel" id="panel-daily"></div>
+  <div class="panel" id="panel-board"></div>
+  <div class="panel" id="panel-qa"></div>
+
+  <p class="note">これは見た目確認用のモックアップです。入力内容やチェックはこの画面を開いている間だけ有効で、リロードすると初期状態に戻ります。実際にチーム全員で共有・保存するには、サーバー側の実装が別途必要です。</p>
+</div>
+
+<script>
+const phases = [
+  {name:"企画立案", tasks:[{t:"目的・コンセプト決定",done:true},{t:"開催日程仮決定",done:true},{t:"予算枠決定",done:true},{t:"参加人数確定",done:true},{t:"企画書共有",done:true}]},
+  {name:"会場・日程調整", tasks:[{t:"候補地リストアップ",done:true},{t:"見積もり比較",done:true},{t:"予約確定",done:true},{t:"交通手段確認",done:true}]},
+  {name:"コンテンツ制作（脚本・演出）", tasks:[{t:"タイムテーブル案作成",done:true},{t:"オープニング演出案",done:true},{t:"MVP選出ロジック確定",done:true},{t:"余興企画決定",done:false},{t:"当日台本完成",done:false}]},
+  {name:"物販・グッズ準備", tasks:[{t:"グッズデザイン確定",done:true},{t:"品切れ管理シート作成",done:true},{t:"発注",done:false},{t:"レジ運用ルール",done:false},{t:"在庫管理担当決め",done:false},{t:"搬入計画",done:false}]},
+  {name:"当日運営マニュアル", tasks:[{t:"緊急連絡フロー",done:false},{t:"タイムキーパー役割分担",done:false},{t:"受付運用",done:false},{t:"撤収手順",done:false}]},
+  {name:"振り返り・アンケート", tasks:[{t:"アンケートフォーム作成",done:false},{t:"振り返り会日程調整",done:false}]}
+];
+let expanded = new Set();
+
+function statusInfo(pct){
+  if(pct===100) return {label:"完了", cls:"done"};
+  if(pct===0) return {label:"未着手", cls:"todo"};
+  return {label:"進行中", cls:"doing"};
+}
+
+function renderProgress(){
+  const wrap = document.getElementById("panel-progress");
+  wrap.innerHTML = "";
+  let doneTotal = 0, taskTotal = 0;
+  phases.forEach((p, idx)=>{
+    const done = p.tasks.filter(t=>t.done).length;
+    const total = p.tasks.length;
+    doneTotal += done; taskTotal += total;
+    const pct = total ? Math.round(done/total*100) : 0;
+    const s = statusInfo(pct);
+    const isOpen = expanded.has(idx);
+    const card = document.createElement("div");
+    card.className = "phase-card";
+    const head = document.createElement("div");
+    head.className = "phase-head";
+    head.innerHTML = `
+      <div class="phase-top">
+        <span class="phase-name">${isOpen ? "▾" : "▸"} ${p.name}</span>
+        <span class="badge ${s.cls}">${s.label}</span>
+      </div>
+      <div class="phase-bottom">
+        <div class="bar-track"><div class="bar-fill ${s.cls}" style="width:${pct}%;"></div></div>
+        <span class="mono" style="font-size:12px; color:var(--text-muted); min-width:36px; text-align:right;">${done}/${total}</span>
+      </div>`;
+    head.addEventListener("click", ()=>{
+      if(expanded.has(idx)) expanded.delete(idx); else expanded.add(idx);
+      renderProgress();
+    });
+    card.appendChild(head);
+    if(isOpen){
+      const list = document.createElement("div");
+      list.className = "task-list";
+      p.tasks.forEach((t, tIdx)=>{
+        const item = document.createElement("label");
+        item.className = "task-item" + (t.done ? " done" : "");
+        item.innerHTML = `<input type="checkbox" ${t.done ? "checked" : ""} /><span>${t.t}</span>`;
+        item.querySelector("input").addEventListener("change", (e)=>{
+          e.stopPropagation();
+          p.tasks[tIdx].done = e.target.checked;
+          renderProgress();
+        });
+        item.addEventListener("click", (e)=>e.stopPropagation());
+        list.appendChild(item);
+      });
+      card.appendChild(list);
+    }
+    wrap.appendChild(card);
+  });
+  document.getElementById("overall-pct").textContent = taskTotal ? Math.round(doneTotal/taskTotal*100) + "%" : "0%";
+}
+
+function addTaskToPhase(phaseName, text){
+  const p = phases.find(ph=>ph.name===phaseName);
+  if(!p) return;
+  p.tasks.push({t:text, done:false});
+  expanded.add(phases.indexOf(p));
+  renderProgress();
+}
+
+const dailyPanel = document.getElementById("panel-daily");
+dailyPanel.innerHTML = `
+  <div class="form-card">
+    <select id="phase-select" style="margin-bottom:8px;">${phases.map(p=>`<option>${p.name}</option>`).join("")}</select>
+    <textarea id="entry-text" rows="3" placeholder="例）オープニング演出の脚本の第一稿を書き上げた"></textarea>
+    <div style="display:flex; justify-content:flex-end;"><button class="send-btn" id="submit-entry">実績を投稿</button></div>
+  </div>
+  <div id="feed"></div>`;
+const feedData = [
+  {name:"高橋", tag:"物販・グッズ準備", time:"14:20", text:"品切れ管理シートの雛形を作成した", cheers:5},
+  {name:"鈴木", tag:"会場・日程調整", time:"11:05", text:"宿泊施設に最終人数を連絡した", cheers:3},
+  {name:"山本", tag:"コンテンツ制作（脚本・演出）", time:"09:40", text:"タイムテーブル案を共有した", cheers:7}
+];
+const feedEl = document.getElementById("feed");
+function renderFeedItem(item){
+  const el = document.createElement("div");
+  el.className = "card";
+  el.innerHTML = `
+    <div style="display:flex; justify-content:space-between; align-items:center;"><span class="feed-name">${item.name}</span><span class="feed-time">${item.time}</span></div>
+    <span class="tag-pill">${item.tag}</span>
+    <p style="font-size:14px; margin:6px 0 8px;">${item.text}</p>
+    <button class="cheer-btn"><span class="heart">♥</span> <span class="cheer-count">${item.cheers}</span></button>`;
+  const btn = el.querySelector(".cheer-btn");
+  let active = false;
+  btn.addEventListener("click", ()=>{
+    active = !active;
+    btn.classList.toggle("active", active);
+    const countEl = btn.querySelector(".cheer-count");
+    countEl.textContent = Number(countEl.textContent) + (active ? 1 : -1);
+  });
+  feedEl.prepend(el);
+}
+feedData.slice().reverse().forEach(renderFeedItem);
+document.getElementById("submit-entry").addEventListener("click", ()=>{
+  const text = document.getElementById("entry-text").value.trim();
+  if(!text) return;
+  const tag = document.getElementById("phase-select").value;
+  renderFeedItem({name:"あなた", tag, time:"たった今", text, cheers:0});
+  document.getElementById("entry-text").value = "";
+});
+
+const boardPanel = document.getElementById("panel-board");
+const members = [
+  {name:"佐藤", role:"デザイン", pts:142, streak:9},
+  {name:"高橋", role:"物販", pts:118, streak:6},
+  {name:"鈴木", role:"会場調整", pts:104, streak:9},
+  {name:"山本", role:"演出", pts:97, streak:4},
+  {name:"田中", role:"広報", pts:81, streak:3}
+];
+members.forEach((m,i)=>{
+  const row = document.createElement("div");
+  row.className = "board-row";
+  row.innerHTML = `
+    <span class="rank">${i+1}</span>
+    <div class="avatar-sm">${m.name.slice(0,1)}</div>
+    <div style="flex:1;"><p class="board-name">${m.name}</p><p class="board-role">${m.role}</p></div>
+    <div class="streak">🔥${m.streak}</div>
+    <span class="pts mono">${m.pts}pt</span>`;
+  boardPanel.appendChild(row);
+});
+
+const qaPanel = document.getElementById("panel-qa");
+qaPanel.innerHTML = `
+  <div class="form-card">
+    <div class="chat-thread" id="chat-thread"></div>
+    <div class="row" style="margin-bottom:8px;">
+      <select id="qa-category" style="max-width:150px;"><option value="追加希望">追加希望</option><option value="抜け漏れ指摘">抜け漏れ指摘</option><option value="オプション提案">オプション提案</option></select>
+      <input id="qa-input" type="text" placeholder="例）当日の緊急連絡フローが決まっていない気がします" />
+    </div>
+    <div style="display:flex; justify-content:flex-end;"><button class="send-btn" id="qa-send">相談する</button></div>
+  </div>
+  <div id="qa-list"></div>`;
+
+const catCls = {"追加希望":"add", "抜け漏れ指摘":"missing", "オプション提案":"option"};
+let qaEntries = [];
+let qaSeq = 0;
+
+const thread = document.getElementById("chat-thread");
+function addBubble(text, isBot){
+  const row = document.createElement("div");
+  row.className = "bubble-row " + (isBot ? "bot" : "user");
+  row.innerHTML = `
+    <div class="bubble-icon" style="background:${isBot ? "var(--purple-bg)" : "var(--info-bg)"}; color:${isBot ? "var(--purple)" : "var(--info)"};">${isBot ? "AI" : "You"}</div>
+    <div class="bubble ${isBot ? "bot" : "user"}">${text}</div>`;
+  thread.appendChild(row);
+  thread.scrollTop = thread.scrollHeight;
+}
+
+function renderQaList(){
+  const qaList = document.getElementById("qa-list");
+  qaList.innerHTML = "";
+  qaEntries.slice().reverse().forEach(entry=>{
+    const el = document.createElement("div");
+    el.className = "card";
+    el.innerHTML = `
+      <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:8px;">
+        <span class="badge ${catCls[entry.category]}">${entry.category}</span>
+        <select class="qa-status" style="font-size:12px; padding:4px 8px;">
+          <option ${entry.status==="未対応"?"selected":""}>未対応</option>
+          <option ${entry.status==="検討中"?"selected":""}>検討中</option>
+          <option ${entry.status==="採用"?"selected":""}>採用</option>
+          <option ${entry.status==="却下"?"selected":""}>却下</option>
+        </select>
+      </div>
+      <p style="font-size:12px; color:var(--text-muted); margin:8px 0 2px;">Q</p>
+      <p style="font-size:14px; margin:0 0 8px;">${entry.q}</p>
+      <p style="font-size:12px; color:var(--text-muted); margin:0 0 2px;">A</p>
+      <p style="font-size:13px; color:var(--text-muted); margin:0;">${entry.a}</p>
+      <div class="taskify-slot"></div>`;
+    const slot = el.querySelector(".taskify-slot");
+    if(entry.status==="採用"){
+      if(entry.converted){
+        slot.innerHTML = `<p class="converted">✓ タスク化済み（${entry.convertedPhase}）</p>`;
+      } else {
+        slot.innerHTML = `<div class="qa-taskify-row"><select class="qa-phase-target">${phases.map(p=>`<option>${p.name}</option>`).join("")}</select><button class="qa-taskify">タスク化する</button></div>`;
+        slot.querySelector(".qa-taskify").addEventListener("click", ()=>{
+          const phaseName = slot.querySelector(".qa-phase-target").value;
+          addTaskToPhase(phaseName, entry.q);
+          entry.converted = true;
+          entry.convertedPhase = phaseName;
+          renderQaList();
+        });
+      }
+    }
+    el.querySelector(".qa-status").addEventListener("change", (e)=>{
+      entry.status = e.target.value;
+      renderQaList();
+      updateCounts();
+    });
+    qaList.appendChild(el);
+  });
+}
+
+function updateCounts(){
+  const pending = qaEntries.filter(e=>e.status==="未対応").length;
+  document.getElementById("qa-pending-count").textContent = pending;
+}
+
+qaEntries.push({id:qaSeq++, category:"抜け漏れ指摘", q:"当日の緊急連絡フローが決まっていない気がします", a:"受け付けました。当日運営マニュアルのフェーズに追加候補として登録しています。", status:"検討中"});
+qaEntries.push({id:qaSeq++, category:"オプション提案", q:"余興でビンゴ大会を追加したい", a:"受け付けました。任意企画として振り返りチームに共有します。", status:"採用", converted:false});
+renderQaList();
+updateCounts();
+
+document.getElementById("qa-send").addEventListener("click", ()=>{
+  const text = document.getElementById("qa-input").value.trim();
+  if(!text) return;
+  const category = document.getElementById("qa-category").value;
+  addBubble(text, false);
+  const reply = `受け付けました。「${category}」としてQ&Aリストに追加します。担当チームが確認します。`;
+  setTimeout(()=>{
+    addBubble(reply, true);
+    qaEntries.push({id:qaSeq++, category, q:text, a:reply, status:"未対応"});
+    renderQaList();
+    updateCounts();
+  }, 300);
+  document.getElementById("qa-input").value = "";
+});
+
+document.querySelectorAll(".tab-btn").forEach(b=>{
+  b.addEventListener("click", ()=>{
+    document.querySelectorAll(".tab-btn").forEach(x=>x.classList.remove("active"));
+    document.querySelectorAll(".panel").forEach(x=>x.classList.remove("active"));
+    b.classList.add("active");
+    document.getElementById("panel-" + b.dataset.tab).classList.add("active");
+  });
+});
+
+let mvpActive = false;
+document.getElementById("mvp-cheer").addEventListener("click", function(){
+  mvpActive = !mvpActive;
+  this.classList.toggle("active", mvpActive);
+  const countEl = document.getElementById("mvp-count");
+  countEl.textContent = Number(countEl.textContent) + (mvpActive ? 1 : -1);
+});
+
+renderProgress();
+</script>
+</body>
+</html>
