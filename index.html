@@ -27,75 +27,31 @@
     --danger-bg:#301c1f;
   }
   *{box-sizing:border-box;}
-  body{
-    margin:0;
-    background:var(--bg);
-    color:var(--text);
-    font-family:'Noto Sans JP', sans-serif;
-    line-height:1.6;
-  }
+  body{margin:0; background:var(--bg); color:var(--text); font-family:'Noto Sans JP', sans-serif; line-height:1.6;}
   .display{font-family:'Bebas Neue', sans-serif; letter-spacing:0.04em;}
   .mono{font-family:'JetBrains Mono', monospace;}
   .wrap{max-width:760px; margin:0 auto; padding:32px 20px 64px;}
-  .eyebrow{
-    font-size:13px; letter-spacing:0.16em; color:var(--accent);
-    display:flex; align-items:center; gap:8px; margin-bottom:6px;
-  }
+  .eyebrow{font-size:13px; letter-spacing:0.16em; color:var(--accent); display:flex; align-items:center; gap:8px; margin-bottom:6px;}
   .eyebrow::before{content:""; width:8px; height:8px; border-radius:50%; background:var(--accent); display:inline-block;}
   h1.display{font-size:34px; margin:0 0 24px; color:var(--text);}
-  .stat-row{
-    display:grid; grid-template-columns:repeat(4, 1fr); gap:10px; margin-bottom:20px;
-  }
-  .stat-card{
-    background:var(--surface); border:1px solid var(--border); border-radius:10px;
-    padding:14px 12px;
-  }
+  .stat-row{display:grid; grid-template-columns:repeat(4, 1fr); gap:10px; margin-bottom:20px;}
+  .stat-card{background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:14px 12px;}
   .stat-card .label{font-size:12px; color:var(--text-muted); margin-bottom:4px;}
   .stat-card .value{font-size:26px; font-weight:700;}
-  .mvp-pass{
-    position:relative;
-    background:var(--surface);
-    border:1px dashed var(--accent-dim);
-    border-radius:14px;
-    padding:22px 24px 20px;
-    margin-bottom:24px;
-    display:flex; gap:16px; align-items:flex-start;
-  }
-  .mvp-pass::before{
-    content:"";
-    position:absolute; top:-8px; left:50%; transform:translateX(-50%);
-    width:16px; height:16px; border-radius:50%;
-    background:var(--bg); border:1px dashed var(--accent-dim);
-  }
-  .mvp-avatar{
-    width:48px; height:48px; border-radius:50%;
-    background:var(--accent); color:#241b06;
-    display:flex; align-items:center; justify-content:center;
-    font-weight:700; font-size:18px; flex-shrink:0;
-  }
+  .mvp-pass{position:relative; background:var(--surface); border:1px dashed var(--accent-dim); border-radius:14px; padding:22px 24px 20px; margin-bottom:24px; display:flex; gap:16px; align-items:flex-start;}
+  .mvp-avatar{width:48px; height:48px; border-radius:50%; background:var(--accent); color:#241b06; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:18px; flex-shrink:0;}
   .mvp-tag{font-size:12px; letter-spacing:0.12em; color:var(--accent); margin:0 0 4px;}
   .mvp-name{font-size:18px; font-weight:700; margin:0 0 4px;}
   .mvp-comment{font-size:14px; color:var(--text-muted); margin:0 0 12px;}
-  .cheer-btn{
-    background:var(--surface-2); border:1px solid var(--border); color:var(--text);
-    border-radius:8px; padding:7px 14px; font-size:13px; cursor:pointer;
-    display:inline-flex; align-items:center; gap:6px;
-  }
+  .cheer-btn{background:var(--surface-2); border:1px solid var(--border); color:var(--text); border-radius:8px; padding:7px 14px; font-size:13px; cursor:pointer; display:inline-flex; align-items:center; gap:6px;}
   .cheer-btn:hover{border-color:var(--accent);}
   .cheer-btn.active{background:var(--accent); color:#241b06; border-color:var(--accent);}
   .tabs{display:flex; gap:6px; margin-bottom:18px; flex-wrap:wrap;}
-  .tab-btn{
-    background:transparent; border:1px solid var(--border); color:var(--text-muted);
-    border-radius:20px; padding:8px 16px; font-size:13px; cursor:pointer;
-    font-family:'Noto Sans JP', sans-serif;
-  }
+  .tab-btn{background:transparent; border:1px solid var(--border); color:var(--text-muted); border-radius:20px; padding:8px 16px; font-size:13px; cursor:pointer; font-family:'Noto Sans JP', sans-serif;}
   .tab-btn.active{background:var(--surface-2); color:var(--text); border-color:var(--accent);}
   .panel{display:none;}
   .panel.active{display:block;}
-  .phase-card{
-    background:var(--surface); border:1px solid var(--border); border-radius:10px;
-    margin-bottom:10px; overflow:hidden;
-  }
+  .phase-card{background:var(--surface); border:1px solid var(--border); border-radius:10px; margin-bottom:10px; overflow:hidden;}
   .phase-head{padding:14px 16px; cursor:pointer;}
   .phase-top{display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;}
   .phase-name{font-size:14px; font-weight:500; display:flex; align-items:center; gap:6px;}
@@ -116,24 +72,18 @@
   .task-item{display:flex; align-items:center; gap:8px; font-size:13px; cursor:pointer;}
   .task-item input{accent-color:var(--accent);}
   .task-item.done span{color:var(--text-muted); text-decoration:line-through;}
-  .card{
-    background:var(--surface); border:1px solid var(--border); border-radius:10px;
-    padding:14px 16px; margin-bottom:10px;
-  }
-  select, textarea, input[type=text]{
-    background:var(--surface-2); border:1px solid var(--border); color:var(--text);
-    border-radius:8px; padding:9px 10px; font-size:14px; font-family:inherit; width:100%;
-  }
+  .card{background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:14px 16px; margin-bottom:10px;}
+  select, textarea, input[type=text]{background:var(--surface-2); border:1px solid var(--border); color:var(--text); border-radius:8px; padding:9px 10px; font-size:14px; font-family:inherit; width:100%;}
   textarea{resize:vertical;}
   .form-card{background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:14px 16px; margin-bottom:16px;}
   .row{display:flex; gap:8px;}
-  .send-btn{
-    background:var(--accent); color:#241b06; border:none; border-radius:8px;
-    padding:9px 16px; font-size:13px; font-weight:700; cursor:pointer; margin-top:8px;
-  }
+  .send-btn{background:var(--accent); color:#241b06; border:none; border-radius:8px; padding:9px 16px; font-size:13px; font-weight:700; cursor:pointer; margin-top:8px;}
+  .send-btn:disabled{opacity:0.5; cursor:default;}
   .feed-name{font-size:14px; font-weight:500;}
   .feed-time{font-size:12px; color:var(--text-muted);}
   .tag-pill{font-size:11px; padding:3px 10px; border-radius:20px; background:var(--surface-2); color:var(--text-muted); display:inline-block; margin:6px 0;}
+  .ai-comment{font-size:12px; color:var(--purple); background:var(--purple-bg); border-radius:8px; padding:6px 10px; margin:6px 0 8px; display:inline-block;}
+  .ai-comment.pending{color:var(--text-muted); background:var(--surface-2);}
   .board-row{display:flex; align-items:center; gap:12px; padding:10px 4px; border-bottom:1px solid var(--border);}
   .rank{font-family:'Bebas Neue', sans-serif; font-size:20px; color:var(--text-muted); width:22px;}
   .avatar-sm{width:34px; height:34px; border-radius:50%; background:var(--info-bg); color:var(--info); display:flex; align-items:center; justify-content:center; font-weight:700; font-size:13px; flex-shrink:0;}
@@ -141,18 +91,13 @@
   .board-role{font-size:12px; color:var(--text-muted);}
   .streak{font-size:13px; color:var(--accent); display:flex; align-items:center; gap:4px;}
   .pts{font-size:14px; font-weight:700; min-width:52px; text-align:right;}
-  .chat-thread{display:flex; flex-direction:column; gap:10px; max-height:220px; overflow-y:auto; margin-bottom:12px;}
-  .bubble-row{display:flex; gap:8px; align-items:flex-start;}
-  .bubble-row.user{flex-direction:row-reverse;}
-  .bubble-icon{width:24px; height:24px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:12px; flex-shrink:0;}
-  .bubble{border-radius:12px; padding:8px 12px; font-size:13px; max-width:78%;}
-  .bubble.bot{background:var(--surface-2);}
-  .bubble.user{background:var(--info-bg); color:var(--info);}
   .qa-taskify-row{display:flex; gap:8px; margin-top:8px;}
   .qa-taskify-row select{flex:1; font-size:12px; padding:6px 8px;}
   .qa-taskify-row button{font-size:12px; padding:6px 10px; background:var(--surface-2); border:1px solid var(--border); color:var(--text); border-radius:8px; cursor:pointer;}
   .converted{font-size:12px; color:var(--success); margin-top:6px;}
   .note{font-size:12px; color:var(--text-muted); margin-top:24px; border-top:1px solid var(--border); padding-top:14px;}
+  .whoami{font-size:12px; color:var(--text-muted); margin-bottom:16px;}
+  .whoami button{background:none; border:none; color:var(--info); cursor:pointer; font-size:12px; text-decoration:underline; padding:0;}
 </style>
 </head>
 <body>
@@ -160,25 +105,17 @@
 
   <p class="eyebrow">GASSHUKU CONTROL ROOM</p>
   <h1 class="display">合宿 準備ダッシュボード</h1>
+  <p class="whoami" id="whoami">読み込み中…</p>
 
   <div class="stat-row">
-    <div class="stat-card"><p class="label">合宿まで</p><p class="value display">12<span style="font-size:14px; margin-left:4px;">日</span></p></div>
+    <div class="stat-card"><p class="label">プログラム数</p><p class="value mono" id="phase-count">-</p></div>
     <div class="stat-card"><p class="label">全体進捗</p><p class="value mono" id="overall-pct">-</p></div>
-    <div class="stat-card"><p class="label">本日の投稿</p><p class="value mono">6</p></div>
+    <div class="stat-card"><p class="label">本日の投稿</p><p class="value mono" id="today-count">-</p></div>
     <div class="stat-card"><p class="label">未対応の提案</p><p class="value mono" id="qa-pending-count">-</p></div>
   </div>
 
-  <div class="mvp-pass">
-    <div class="mvp-avatar">佐</div>
-    <div style="flex:1;">
-      <p class="mvp-tag display">TODAY'S MVP</p>
-      <p class="mvp-name">佐藤（デザイン担当）</p>
-      <p class="mvp-comment">会場の動線図を一晩で仕上げてくれました</p>
-      <div style="display:flex; align-items:center; gap:8px;">
-        <button class="cheer-btn" id="mvp-cheer">♥ <span id="mvp-count">18</span></button>
-        <span style="font-size:12px; color:var(--text-muted);">からの称賛</span>
-      </div>
-    </div>
+  <div class="mvp-pass" id="mvp-pass">
+    <p style="font-size:13px; color:var(--text-muted);">MVP読み込み中…</p>
   </div>
 
   <div class="tabs">
@@ -193,19 +130,59 @@
   <div class="panel" id="panel-board"></div>
   <div class="panel" id="panel-qa"></div>
 
-  <p class="note">これは見た目確認用のモックアップです。入力内容やチェックはこの画面を開いている間だけ有効で、リロードすると初期状態に戻ります。実際にチーム全員で共有・保存するには、サーバー側の実装が別途必要です。</p>
+  <p class="note">このアプリはURLを知っていれば誰でも閲覧・投稿できます。表示名以外の個人情報（住所・電話番号など）は投稿しないでください。</p>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
-const phases = [
-  {name:"企画立案", tasks:[{t:"目的・コンセプト決定",done:true},{t:"開催日程仮決定",done:true},{t:"予算枠決定",done:true},{t:"参加人数確定",done:true},{t:"企画書共有",done:true}]},
-  {name:"会場・日程調整", tasks:[{t:"候補地リストアップ",done:true},{t:"見積もり比較",done:true},{t:"予約確定",done:true},{t:"交通手段確認",done:true}]},
-  {name:"コンテンツ制作（脚本・演出）", tasks:[{t:"タイムテーブル案作成",done:true},{t:"オープニング演出案",done:true},{t:"MVP選出ロジック確定",done:true},{t:"余興企画決定",done:false},{t:"当日台本完成",done:false}]},
-  {name:"物販・グッズ準備", tasks:[{t:"グッズデザイン確定",done:true},{t:"品切れ管理シート作成",done:true},{t:"発注",done:false},{t:"レジ運用ルール",done:false},{t:"在庫管理担当決め",done:false},{t:"搬入計画",done:false}]},
-  {name:"当日運営マニュアル", tasks:[{t:"緊急連絡フロー",done:false},{t:"タイムキーパー役割分担",done:false},{t:"受付運用",done:false},{t:"撤収手順",done:false}]},
-  {name:"振り返り・アンケート", tasks:[{t:"アンケートフォーム作成",done:false},{t:"振り返り会日程調整",done:false}]}
-];
-let expanded = new Set();
+// ============================================================
+// Supabase接続設定
+// ここの2つを、自分のSupabaseプロジェクトの値に置き換えてください
+// (Settings > API から取得できます)
+// ============================================================
+const SUPABASE_URL = 'https://xtghwxdngpmznhtwahht.supabase.co';
+const SUPABASE_ANON_KEY = 'sb_publishable_3pq2WkWi5_nlDPG8vi8WUg_9iJ0_Duj';
+
+const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+let currentUser = null; // { id, name, points, streak }
+let expandedPhases = new Set();
+
+// ------------------------------------------------------------
+// ユーザー識別（認証なし・簡易版）
+// 一度名前を入力したらブラウザに保存し、次回から聞かない
+// 注意：これはこのHTMLを実際にデプロイした先(GitHub Pagesなど)で動作します。
+//       Claudeのチャット内プレビューでは保存が効かない場合があります。
+// ------------------------------------------------------------
+async function ensureUser() {
+  const savedId = localStorage.getItem('gasshuku_user_id');
+  if (savedId) {
+    const { data } = await supabase.from('users').select('*').eq('id', savedId).single();
+    if (data) { currentUser = data; return; }
+  }
+  let name = '';
+  while (!name) {
+    name = (prompt('お名前（表示名）を入力してください') || '').trim();
+  }
+  const { data, error } = await supabase.from('users').insert({ name }).select().single();
+  if (error) { console.error(error); alert('ユーザー登録に失敗しました: ' + error.message); return; }
+  currentUser = data;
+  localStorage.setItem('gasshuku_user_id', data.id);
+}
+
+function renderWhoAmI() {
+  document.getElementById('whoami').innerHTML =
+    `${currentUser.name} としてログイン中　<button id="switch-user">名前を変える</button>`;
+  document.getElementById('switch-user').addEventListener('click', () => {
+    localStorage.removeItem('gasshuku_user_id');
+    location.reload();
+  });
+}
+
+// ------------------------------------------------------------
+// 進捗管理タブ
+// ------------------------------------------------------------
+let phasesCache = [];
 
 function statusInfo(pct){
   if(pct===100) return {label:"完了", cls:"done"};
@@ -213,17 +190,31 @@ function statusInfo(pct){
   return {label:"進行中", cls:"doing"};
 }
 
+async function loadPhases() {
+  // .select('*, tasks(*)') は SQLのJOINに近いことをSupabaseにやらせている書き方。
+  // 「phasesを取ってきて、それぞれにぶら下がるtasksも一緒に埋め込んで」という意味。
+  const { data, error } = await supabase
+    .from('phases')
+    .select('*, tasks(*)')
+    .order('order_index', { ascending: true });
+  if (error) { console.error(error); return; }
+  phasesCache = data;
+  renderProgress();
+  populatePhaseSelects();
+}
+
 function renderProgress(){
   const wrap = document.getElementById("panel-progress");
   wrap.innerHTML = "";
   let doneTotal = 0, taskTotal = 0;
-  phases.forEach((p, idx)=>{
-    const done = p.tasks.filter(t=>t.done).length;
-    const total = p.tasks.length;
+  phasesCache.forEach((p, idx)=>{
+    const tasks = p.tasks || [];
+    const done = tasks.filter(t=>t.done).length;
+    const total = tasks.length;
     doneTotal += done; taskTotal += total;
     const pct = total ? Math.round(done/total*100) : 0;
     const s = statusInfo(pct);
-    const isOpen = expanded.has(idx);
+    const isOpen = expandedPhases.has(p.id);
     const card = document.createElement("div");
     card.className = "phase-card";
     const head = document.createElement("div");
@@ -238,21 +229,21 @@ function renderProgress(){
         <span class="mono" style="font-size:12px; color:var(--text-muted); min-width:36px; text-align:right;">${done}/${total}</span>
       </div>`;
     head.addEventListener("click", ()=>{
-      if(expanded.has(idx)) expanded.delete(idx); else expanded.add(idx);
+      if(expandedPhases.has(p.id)) expandedPhases.delete(p.id); else expandedPhases.add(p.id);
       renderProgress();
     });
     card.appendChild(head);
     if(isOpen){
       const list = document.createElement("div");
       list.className = "task-list";
-      p.tasks.forEach((t, tIdx)=>{
+      tasks.forEach((t)=>{
         const item = document.createElement("label");
         item.className = "task-item" + (t.done ? " done" : "");
-        item.innerHTML = `<input type="checkbox" ${t.done ? "checked" : ""} /><span>${t.t}</span>`;
-        item.querySelector("input").addEventListener("change", (e)=>{
+        item.innerHTML = `<input type="checkbox" ${t.done ? "checked" : ""} /><span>${t.title}</span>`;
+        item.querySelector("input").addEventListener("change", async (e)=>{
           e.stopPropagation();
-          p.tasks[tIdx].done = e.target.checked;
-          renderProgress();
+          await supabase.from('tasks').update({ done: e.target.checked }).eq('id', t.id);
+          await loadPhases();
         });
         item.addEventListener("click", (e)=>e.stopPropagation());
         list.appendChild(item);
@@ -262,83 +253,174 @@ function renderProgress(){
     wrap.appendChild(card);
   });
   document.getElementById("overall-pct").textContent = taskTotal ? Math.round(doneTotal/taskTotal*100) + "%" : "0%";
+  document.getElementById("phase-count").textContent = phasesCache.length;
 }
 
-function addTaskToPhase(phaseName, text){
-  const p = phases.find(ph=>ph.name===phaseName);
-  if(!p) return;
-  p.tasks.push({t:text, done:false});
-  expanded.add(phases.indexOf(p));
-  renderProgress();
+function populatePhaseSelects(){
+  const options = phasesCache.map(p=>`<option value="${p.id}">${p.name}</option>`).join("");
+  const entrySelect = document.getElementById('phase-select');
+  if (entrySelect) entrySelect.innerHTML = options;
 }
 
+async function addTaskToPhase(phaseId, text){
+  await supabase.from('tasks').insert({ phase_id: phaseId, title: text });
+  expandedPhases.add(phaseId);
+  await loadPhases();
+}
+
+// ------------------------------------------------------------
+// 今日の実績タブ
+// ------------------------------------------------------------
 const dailyPanel = document.getElementById("panel-daily");
 dailyPanel.innerHTML = `
   <div class="form-card">
-    <select id="phase-select" style="margin-bottom:8px;">${phases.map(p=>`<option>${p.name}</option>`).join("")}</select>
+    <select id="phase-select" style="margin-bottom:8px;"></select>
     <textarea id="entry-text" rows="3" placeholder="例）オープニング演出の脚本の第一稿を書き上げた"></textarea>
     <div style="display:flex; justify-content:flex-end;"><button class="send-btn" id="submit-entry">実績を投稿</button></div>
   </div>
   <div id="feed"></div>`;
-const feedData = [
-  {name:"高橋", tag:"物販・グッズ準備", time:"14:20", text:"品切れ管理シートの雛形を作成した", cheers:5},
-  {name:"鈴木", tag:"会場・日程調整", time:"11:05", text:"宿泊施設に最終人数を連絡した", cheers:3},
-  {name:"山本", tag:"コンテンツ制作（脚本・演出）", time:"09:40", text:"タイムテーブル案を共有した", cheers:7}
-];
-const feedEl = document.getElementById("feed");
-function renderFeedItem(item){
-  const el = document.createElement("div");
-  el.className = "card";
-  el.innerHTML = `
-    <div style="display:flex; justify-content:space-between; align-items:center;"><span class="feed-name">${item.name}</span><span class="feed-time">${item.time}</span></div>
-    <span class="tag-pill">${item.tag}</span>
-    <p style="font-size:14px; margin:6px 0 8px;">${item.text}</p>
-    <button class="cheer-btn"><span class="heart">♥</span> <span class="cheer-count">${item.cheers}</span></button>`;
-  const btn = el.querySelector(".cheer-btn");
-  let active = false;
-  btn.addEventListener("click", ()=>{
-    active = !active;
-    btn.classList.toggle("active", active);
-    const countEl = btn.querySelector(".cheer-count");
-    countEl.textContent = Number(countEl.textContent) + (active ? 1 : -1);
+
+async function loadEntries() {
+  // entry_cheers(user_id) を埋め込むと、そのentryに誰がcheerしたかの一覧が配列で付いてくる
+  const { data, error } = await supabase
+    .from('entries')
+    .select('*, users(name), phases(name), entry_cheers(user_id)')
+    .order('created_at', { ascending: false })
+    .limit(50);
+  if (error) { console.error(error); return; }
+
+  const feedEl = document.getElementById("feed");
+  feedEl.innerHTML = "";
+  const todayStr = new Date().toDateString();
+  let todayCount = 0;
+
+  data.forEach(entry => {
+    if (new Date(entry.created_at).toDateString() === todayStr) todayCount++;
+
+    const cheerCount = (entry.entry_cheers || []).length;
+    const iCheered = currentUser && (entry.entry_cheers || []).some(c => c.user_id === currentUser.id);
+
+    const el = document.createElement("div");
+    el.className = "card";
+
+    let aiHtml = '';
+    if (entry.ai_status === 'done' && entry.ai_comment) {
+      aiHtml = `<div class="ai-comment">🤖 ${entry.ai_comment}</div><br>`;
+    } else if (entry.ai_status === 'pending') {
+      aiHtml = `<div class="ai-comment pending">🤖 AI評価中…</div><br>`;
+    } else if (entry.ai_status === 'error') {
+      aiHtml = `<div class="ai-comment pending">🤖 AI評価に失敗しました</div><br>`;
+    }
+
+    el.innerHTML = `
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        <span class="feed-name">${entry.users?.name ?? '(不明)'}</span>
+        <span class="feed-time">${new Date(entry.created_at).toLocaleString('ja-JP')}</span>
+      </div>
+      <span class="tag-pill">${entry.phases?.name ?? '未分類'}</span>
+      <p style="font-size:14px; margin:6px 0 8px;">${entry.text}</p>
+      ${aiHtml}
+      <button class="cheer-btn ${iCheered ? 'active' : ''}"><span class="heart">♥</span> <span class="cheer-count">${cheerCount}</span></button>`;
+
+    el.querySelector(".cheer-btn").addEventListener("click", async () => {
+      if (!currentUser) return;
+      if (iCheered) {
+        await supabase.from('entry_cheers').delete().eq('entry_id', entry.id).eq('user_id', currentUser.id);
+      } else {
+        await supabase.from('entry_cheers').insert({ entry_id: entry.id, user_id: currentUser.id });
+      }
+      await loadEntries();
+    });
+
+    feedEl.appendChild(el);
   });
-  feedEl.prepend(el);
+
+  document.getElementById("today-count").textContent = todayCount;
 }
-feedData.slice().reverse().forEach(renderFeedItem);
-document.getElementById("submit-entry").addEventListener("click", ()=>{
+
+document.getElementById("submit-entry").addEventListener("click", async ()=>{
   const text = document.getElementById("entry-text").value.trim();
-  if(!text) return;
-  const tag = document.getElementById("phase-select").value;
-  renderFeedItem({name:"あなた", tag, time:"たった今", text, cheers:0});
+  const phaseId = document.getElementById("phase-select").value;
+  if(!text || !phaseId || !currentUser) return;
+  const btn = document.getElementById("submit-entry");
+  btn.disabled = true;
+  await supabase.from('entries').insert({ user_id: currentUser.id, phase_id: phaseId, text });
   document.getElementById("entry-text").value = "";
+  btn.disabled = false;
+  await loadEntries();
 });
 
-const boardPanel = document.getElementById("panel-board");
-const members = [
-  {name:"佐藤", role:"デザイン", pts:142, streak:9},
-  {name:"高橋", role:"物販", pts:118, streak:6},
-  {name:"鈴木", role:"会場調整", pts:104, streak:9},
-  {name:"山本", role:"演出", pts:97, streak:4},
-  {name:"田中", role:"広報", pts:81, streak:3}
-];
-members.forEach((m,i)=>{
-  const row = document.createElement("div");
-  row.className = "board-row";
-  row.innerHTML = `
-    <span class="rank">${i+1}</span>
-    <div class="avatar-sm">${m.name.slice(0,1)}</div>
-    <div style="flex:1;"><p class="board-name">${m.name}</p><p class="board-role">${m.role}</p></div>
-    <div class="streak">🔥${m.streak}</div>
-    <span class="pts mono">${m.pts}pt</span>`;
-  boardPanel.appendChild(row);
-});
+// ------------------------------------------------------------
+// 称賛ボードタブ
+// ------------------------------------------------------------
+async function loadBoard() {
+  const { data, error } = await supabase
+    .from('users')
+    .select('*')
+    .order('points', { ascending: false })
+    .limit(20);
+  if (error) { console.error(error); return; }
 
+  const boardPanel = document.getElementById("panel-board");
+  boardPanel.innerHTML = "";
+  data.forEach((m, i)=>{
+    const row = document.createElement("div");
+    row.className = "board-row";
+    row.innerHTML = `
+      <span class="rank">${i+1}</span>
+      <div class="avatar-sm">${m.name.slice(0,1)}</div>
+      <div style="flex:1;"><p class="board-name">${m.name}</p><p class="board-role">${m.role ?? ''}</p></div>
+      <div class="streak">🔥${m.streak}</div>
+      <span class="pts mono">${m.points}pt</span>`;
+    boardPanel.appendChild(row);
+  });
+}
+
+// ------------------------------------------------------------
+// MVPパス
+// ------------------------------------------------------------
+async function loadMvp() {
+  const { data, error } = await supabase
+    .from('mvp_awards')
+    .select('*, users(name)')
+    .order('award_date', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  const wrap = document.getElementById('mvp-pass');
+  if (error || !data) {
+    wrap.innerHTML = `<p style="font-size:13px; color:var(--text-muted);">まだMVPが選出されていません。</p>`;
+    return;
+  }
+  wrap.innerHTML = `
+    <div class="mvp-avatar">${(data.users?.name ?? '?').slice(0,1)}</div>
+    <div style="flex:1;">
+      <p class="mvp-tag display">TODAY'S MVP</p>
+      <p class="mvp-name">${data.users?.name ?? '(不明)'}</p>
+      <p class="mvp-comment">${data.comment ?? ''}</p>
+      <div style="display:flex; align-items:center; gap:8px;">
+        <button class="cheer-btn" id="mvp-cheer">♥ <span id="mvp-count">${data.cheer_count}</span></button>
+        <span style="font-size:12px; color:var(--text-muted);">からの称賛</span>
+      </div>
+    </div>`;
+  document.getElementById('mvp-cheer').addEventListener('click', async () => {
+    await supabase.from('mvp_awards').update({ cheer_count: data.cheer_count + 1 }).eq('id', data.id);
+    await loadMvp();
+  });
+}
+
+// ------------------------------------------------------------
+// 作業提案・Q&Aタブ
+// ------------------------------------------------------------
 const qaPanel = document.getElementById("panel-qa");
 qaPanel.innerHTML = `
   <div class="form-card">
-    <div class="chat-thread" id="chat-thread"></div>
     <div class="row" style="margin-bottom:8px;">
-      <select id="qa-category" style="max-width:150px;"><option value="追加希望">追加希望</option><option value="抜け漏れ指摘">抜け漏れ指摘</option><option value="オプション提案">オプション提案</option></select>
+      <select id="qa-category" style="max-width:150px;">
+        <option value="追加希望">追加希望</option>
+        <option value="抜け漏れ指摘">抜け漏れ指摘</option>
+        <option value="オプション提案">オプション提案</option>
+      </select>
       <input id="qa-input" type="text" placeholder="例）当日の緊急連絡フローが決まっていない気がします" />
     </div>
     <div style="display:flex; justify-content:flex-end;"><button class="send-btn" id="qa-send">相談する</button></div>
@@ -346,24 +428,21 @@ qaPanel.innerHTML = `
   <div id="qa-list"></div>`;
 
 const catCls = {"追加希望":"add", "抜け漏れ指摘":"missing", "オプション提案":"option"};
-let qaEntries = [];
-let qaSeq = 0;
 
-const thread = document.getElementById("chat-thread");
-function addBubble(text, isBot){
-  const row = document.createElement("div");
-  row.className = "bubble-row " + (isBot ? "bot" : "user");
-  row.innerHTML = `
-    <div class="bubble-icon" style="background:${isBot ? "var(--purple-bg)" : "var(--info-bg)"}; color:${isBot ? "var(--purple)" : "var(--info)"};">${isBot ? "AI" : "You"}</div>
-    <div class="bubble ${isBot ? "bot" : "user"}">${text}</div>`;
-  thread.appendChild(row);
-  thread.scrollTop = thread.scrollHeight;
-}
+async function loadQa() {
+  const { data, error } = await supabase
+    .from('qa_items')
+    .select('*, users(name)')
+    .order('created_at', { ascending: false });
+  if (error) { console.error(error); return; }
 
-function renderQaList(){
   const qaList = document.getElementById("qa-list");
   qaList.innerHTML = "";
-  qaEntries.slice().reverse().forEach(entry=>{
+  let pending = 0;
+
+  data.forEach(entry => {
+    if (entry.status === '未対応') pending++;
+
     const el = document.createElement("div");
     el.className = "card";
     el.innerHTML = `
@@ -376,60 +455,54 @@ function renderQaList(){
           <option ${entry.status==="却下"?"selected":""}>却下</option>
         </select>
       </div>
-      <p style="font-size:12px; color:var(--text-muted); margin:8px 0 2px;">Q</p>
-      <p style="font-size:14px; margin:0 0 8px;">${entry.q}</p>
-      <p style="font-size:12px; color:var(--text-muted); margin:0 0 2px;">A</p>
-      <p style="font-size:13px; color:var(--text-muted); margin:0;">${entry.a}</p>
+      <p style="font-size:12px; color:var(--text-muted); margin:8px 0 2px;">${entry.users?.name ?? '(不明)'} より</p>
+      <p style="font-size:14px; margin:0 0 8px;">${entry.question}</p>
       <div class="taskify-slot"></div>`;
+
     const slot = el.querySelector(".taskify-slot");
-    if(entry.status==="採用"){
-      if(entry.converted){
-        slot.innerHTML = `<p class="converted">✓ タスク化済み（${entry.convertedPhase}）</p>`;
+    if (entry.status === "採用") {
+      if (entry.converted_task_id) {
+        slot.innerHTML = `<p class="converted">✓ タスク化済み</p>`;
       } else {
-        slot.innerHTML = `<div class="qa-taskify-row"><select class="qa-phase-target">${phases.map(p=>`<option>${p.name}</option>`).join("")}</select><button class="qa-taskify">タスク化する</button></div>`;
-        slot.querySelector(".qa-taskify").addEventListener("click", ()=>{
-          const phaseName = slot.querySelector(".qa-phase-target").value;
-          addTaskToPhase(phaseName, entry.q);
-          entry.converted = true;
-          entry.convertedPhase = phaseName;
-          renderQaList();
+        slot.innerHTML = `<div class="qa-taskify-row">
+          <select class="qa-phase-target">${phasesCache.map(p=>`<option value="${p.id}">${p.name}</option>`).join("")}</select>
+          <button class="qa-taskify">タスク化する</button>
+        </div>`;
+        slot.querySelector(".qa-taskify").addEventListener("click", async () => {
+          const phaseId = slot.querySelector(".qa-phase-target").value;
+          const { data: newTask } = await supabase.from('tasks').insert({ phase_id: phaseId, title: entry.question }).select().single();
+          if (newTask) {
+            await supabase.from('qa_items').update({ converted_task_id: newTask.id }).eq('id', entry.id);
+          }
+          await loadPhases();
+          await loadQa();
         });
       }
     }
-    el.querySelector(".qa-status").addEventListener("change", (e)=>{
-      entry.status = e.target.value;
-      renderQaList();
-      updateCounts();
+
+    el.querySelector(".qa-status").addEventListener("change", async (e) => {
+      await supabase.from('qa_items').update({ status: e.target.value }).eq('id', entry.id);
+      await loadQa();
     });
+
     qaList.appendChild(el);
   });
-}
 
-function updateCounts(){
-  const pending = qaEntries.filter(e=>e.status==="未対応").length;
   document.getElementById("qa-pending-count").textContent = pending;
 }
 
-qaEntries.push({id:qaSeq++, category:"抜け漏れ指摘", q:"当日の緊急連絡フローが決まっていない気がします", a:"受け付けました。当日運営マニュアルのフェーズに追加候補として登録しています。", status:"検討中"});
-qaEntries.push({id:qaSeq++, category:"オプション提案", q:"余興でビンゴ大会を追加したい", a:"受け付けました。任意企画として振り返りチームに共有します。", status:"採用", converted:false});
-renderQaList();
-updateCounts();
-
-document.getElementById("qa-send").addEventListener("click", ()=>{
-  const text = document.getElementById("qa-input").value.trim();
-  if(!text) return;
+document.getElementById("qa-send").addEventListener("click", async ()=>{
+  const question = document.getElementById("qa-input").value.trim();
   const category = document.getElementById("qa-category").value;
-  addBubble(text, false);
-  const reply = `受け付けました。「${category}」としてQ&Aリストに追加します。担当チームが確認します。`;
-  setTimeout(()=>{
-    addBubble(reply, true);
-    qaEntries.push({id:qaSeq++, category, q:text, a:reply, status:"未対応"});
-    renderQaList();
-    updateCounts();
-  }, 300);
+  if(!question || !currentUser) return;
+  await supabase.from('qa_items').insert({ user_id: currentUser.id, category, question, status: '未対応' });
   document.getElementById("qa-input").value = "";
+  await loadQa();
 });
 
+// ------------------------------------------------------------
+// タブ切り替え
+// ------------------------------------------------------------
 document.querySelectorAll(".tab-btn").forEach(b=>{
   b.addEventListener("click", ()=>{
     document.querySelectorAll(".tab-btn").forEach(x=>x.classList.remove("active"));
@@ -439,15 +512,18 @@ document.querySelectorAll(".tab-btn").forEach(b=>{
   });
 });
 
-let mvpActive = false;
-document.getElementById("mvp-cheer").addEventListener("click", function(){
-  mvpActive = !mvpActive;
-  this.classList.toggle("active", mvpActive);
-  const countEl = document.getElementById("mvp-count");
-  countEl.textContent = Number(countEl.textContent) + (mvpActive ? 1 : -1);
-});
-
-renderProgress();
+// ------------------------------------------------------------
+// 初期化
+// ------------------------------------------------------------
+(async function init(){
+  await ensureUser();
+  renderWhoAmI();
+  await loadPhases();
+  await loadEntries();
+  await loadBoard();
+  await loadMvp();
+  await loadQa();
+})();
 </script>
 </body>
 </html>
