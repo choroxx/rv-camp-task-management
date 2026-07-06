@@ -107,6 +107,15 @@
   <h1 class="display">合宿 準備ダッシュボード</h1>
   <p class="whoami" id="whoami">読み込み中…</p>
 
+  <div class="form-card" id="name-overlay" style="display:none;">
+    <p style="font-size:14px; margin:0 0 8px;">お名前(表示名)を入力してください</p>
+    <div class="row">
+      <input type="text" id="name-input" placeholder="例）田中太郎" />
+      <button class="send-btn" id="name-submit" style="margin-top:0;">決定</button>
+    </div>
+    <p id="name-error" style="font-size:12px; color:var(--danger); margin:8px 0 0;"></p>
+  </div>
+
   <div class="stat-row">
     <div class="stat-card"><p class="label">プログラム数</p><p class="value mono" id="phase-count">-</p></div>
     <div class="stat-card"><p class="label">全体進捗</p><p class="value mono" id="overall-pct">-</p></div>
@@ -157,17 +166,39 @@ let expandedPhases = new Set();
 async function ensureUser() {
   const savedId = localStorage.getItem('gasshuku_user_id');
   if (savedId) {
-    const { data } = await supabase.from('users').select('*').eq('id', savedId).single();
-    if (data) { currentUser = data; return; }
+    try {
+      const { data, error } = await supabase.from('users').select('*').eq('id', savedId).single();
+      if (data && !error) { currentUser = data; return; }
+    } catch (e) { console.error(e); }
   }
-  let name = '';
-  while (!name) {
-    name = (prompt('お名前（表示名）を入力してください') || '').trim();
-  }
-  const { data, error } = await supabase.from('users').insert({ name }).select().single();
-  if (error) { console.error(error); alert('ユーザー登録に失敗しました: ' + error.message); return; }
-  currentUser = data;
-  localStorage.setItem('gasshuku_user_id', data.id);
+  await askForName();
+}
+
+function askForName() {
+  return new Promise((resolve) => {
+    const overlay = document.getElementById('name-overlay');
+    const errorEl = document.getElementById('name-error');
+    overlay.style.display = 'block';
+
+    document.getElementById('name-submit').addEventListener('click', async () => {
+      const name = document.getElementById('name-input').value.trim();
+      errorEl.textContent = '';
+      if (!name) {
+        errorEl.textContent = 'お名前を入力してください';
+        return;
+      }
+      const { data, error } = await supabase.from('users').insert({ name }).select().single();
+      if (error) {
+        errorEl.textContent = '登録に失敗しました: ' + error.message;
+        console.error(error);
+        return;
+      }
+      currentUser = data;
+      localStorage.setItem('gasshuku_user_id', data.id);
+      overlay.style.display = 'none';
+      resolve();
+    });
+  });
 }
 
 function renderWhoAmI() {
@@ -516,13 +547,18 @@ document.querySelectorAll(".tab-btn").forEach(b=>{
 // 初期化
 // ------------------------------------------------------------
 (async function init(){
-  await ensureUser();
-  renderWhoAmI();
-  await loadPhases();
-  await loadEntries();
-  await loadBoard();
-  await loadMvp();
-  await loadQa();
+  try {
+    await ensureUser();
+    renderWhoAmI();
+    await loadPhases();
+    await loadEntries();
+    await loadBoard();
+    await loadMvp();
+    await loadQa();
+  } catch (e) {
+    console.error(e);
+    document.getElementById('whoami').textContent = 'エラーが発生しました: ' + e.message;
+  }
 })();
 </script>
 </body>
