@@ -142,7 +142,34 @@
   <p class="note">このアプリはURLを知っていれば誰でも閲覧・投稿できます。表示名以外の個人情報（住所・電話番号など）は投稿しないでください。</p>
 </div>
 
+<script>
+// ============================================================
+// 診断用：何かエラーが起きたら、必ず画面に表示する監視役
+// これはSupabase読み込みより前に置くことで、
+// 後続の処理がどこで止まっても捕まえられるようにしてある
+// ============================================================
+window.addEventListener('error', function(e){
+  var el = document.getElementById('whoami');
+  if (el) el.textContent = '⚠️ エラー: ' + e.message + '(' + (e.filename || '') + ':' + e.lineno + ')';
+});
+window.addEventListener('unhandledrejection', function(e){
+  var el = document.getElementById('whoami');
+  if (el) el.textContent = '⚠️ 非同期エラー: ' + (e.reason && e.reason.message ? e.reason.message : e.reason);
+});
+</script>
+
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<script>
+// ============================================================
+// Supabaseライブラリが本当に読み込めているかの確認
+// ============================================================
+if (typeof window.supabase === 'undefined') {
+  document.getElementById('whoami').textContent = '⚠️ Supabaseライブラリの読み込みに失敗しました(CDN)';
+  throw new Error('Supabase library failed to load from CDN');
+}
+</script>
+
 <script>
 // ============================================================
 // Supabase接続設定
@@ -153,6 +180,7 @@ const SUPABASE_URL = 'https://xtghwxdngpmznhtwahht.supabase.co';
 const SUPABASE_ANON_KEY = 'sb_publishable_3pq2WkWi5_nlDPG8vi8WUg_9iJ0_Duj';
 
 const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
 
 let currentUser = null; // { id, name, points, streak }
 let expandedPhases = new Set();
