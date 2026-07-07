@@ -1,0 +1,593 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>合宿コントロールルーム</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Noto+Sans+JP:wght@400;500;700;900&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#15141a;
+    --surface:#1e1d25;
+    --surface-2:#26242f;
+    --border:#37353f;
+    --text:#f5f3ee;
+    --text-muted:#9c9aa8;
+    --accent:#f2b134;
+    --accent-dim:#7a5c1c;
+    --success:#4caf7d;
+    --success-bg:#1c2b23;
+    --info:#6c8ef2;
+    --info-bg:#1c2436;
+    --purple:#a78bfa;
+    --purple-bg:#241f36;
+    --danger:#e5555c;
+    --danger-bg:#301c1f;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0; background:var(--bg); color:var(--text); font-family:'Noto Sans JP', sans-serif; line-height:1.6;}
+  .display{font-family:'Bebas Neue', sans-serif; letter-spacing:0.04em;}
+  .mono{font-family:'JetBrains Mono', monospace;}
+  .wrap{max-width:760px; margin:0 auto; padding:32px 20px 64px;}
+  .eyebrow{font-size:13px; letter-spacing:0.16em; color:var(--accent); display:flex; align-items:center; gap:8px; margin-bottom:6px;}
+  .eyebrow::before{content:""; width:8px; height:8px; border-radius:50%; background:var(--accent); display:inline-block;}
+  h1.display{font-size:34px; margin:0 0 24px; color:var(--text);}
+  .stat-row{display:grid; grid-template-columns:repeat(4, 1fr); gap:10px; margin-bottom:20px;}
+  .stat-card{background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:14px 12px;}
+  .stat-card .label{font-size:12px; color:var(--text-muted); margin-bottom:4px;}
+  .stat-card .value{font-size:26px; font-weight:700;}
+  .mvp-pass{position:relative; background:var(--surface); border:1px dashed var(--accent-dim); border-radius:14px; padding:22px 24px 20px; margin-bottom:24px; display:flex; gap:16px; align-items:flex-start;}
+  .mvp-avatar{width:48px; height:48px; border-radius:50%; background:var(--accent); color:#241b06; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:18px; flex-shrink:0;}
+  .mvp-tag{font-size:12px; letter-spacing:0.12em; color:var(--accent); margin:0 0 4px;}
+  .mvp-name{font-size:18px; font-weight:700; margin:0 0 4px;}
+  .mvp-comment{font-size:14px; color:var(--text-muted); margin:0 0 12px;}
+  .cheer-btn{background:var(--surface-2); border:1px solid var(--border); color:var(--text); border-radius:8px; padding:7px 14px; font-size:13px; cursor:pointer; display:inline-flex; align-items:center; gap:6px;}
+  .cheer-btn:hover{border-color:var(--accent);}
+  .cheer-btn.active{background:var(--accent); color:#241b06; border-color:var(--accent);}
+  .tabs{display:flex; gap:6px; margin-bottom:18px; flex-wrap:wrap;}
+  .tab-btn{background:transparent; border:1px solid var(--border); color:var(--text-muted); border-radius:20px; padding:8px 16px; font-size:13px; cursor:pointer; font-family:'Noto Sans JP', sans-serif;}
+  .tab-btn.active{background:var(--surface-2); color:var(--text); border-color:var(--accent);}
+  .panel{display:none;}
+  .panel.active{display:block;}
+  .phase-card{background:var(--surface); border:1px solid var(--border); border-radius:10px; margin-bottom:10px; overflow:hidden;}
+  .phase-head{padding:14px 16px; cursor:pointer;}
+  .phase-top{display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;}
+  .phase-name{font-size:14px; font-weight:500; display:flex; align-items:center; gap:6px;}
+  .badge{font-size:11px; padding:3px 10px; border-radius:20px;}
+  .badge.done{background:var(--success-bg); color:var(--success);}
+  .badge.doing{background:var(--info-bg); color:var(--info);}
+  .badge.todo{background:var(--surface-2); color:var(--text-muted);}
+  .badge.add{background:var(--info-bg); color:var(--info);}
+  .badge.missing{background:var(--danger-bg); color:var(--danger);}
+  .badge.option{background:var(--purple-bg); color:var(--purple);}
+  .bar-track{flex:1; height:6px; background:var(--surface-2); border-radius:4px; overflow:hidden;}
+  .bar-fill{height:100%;}
+  .bar-fill.done{background:var(--success);}
+  .bar-fill.doing{background:var(--info);}
+  .bar-fill.todo{background:var(--border);}
+  .phase-bottom{display:flex; align-items:center; gap:10px;}
+  .task-list{border-top:1px solid var(--border); padding:10px 16px 14px; display:flex; flex-direction:column; gap:8px;}
+  .task-item{display:flex; align-items:center; gap:8px; font-size:13px; cursor:pointer;}
+  .task-item input{accent-color:var(--accent);}
+  .task-item.done span{color:var(--text-muted); text-decoration:line-through;}
+  .card{background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:14px 16px; margin-bottom:10px;}
+  select, textarea, input[type=text]{background:var(--surface-2); border:1px solid var(--border); color:var(--text); border-radius:8px; padding:9px 10px; font-size:14px; font-family:inherit; width:100%;}
+  textarea{resize:vertical;}
+  .form-card{background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:14px 16px; margin-bottom:16px;}
+  .row{display:flex; gap:8px;}
+  .send-btn{background:var(--accent); color:#241b06; border:none; border-radius:8px; padding:9px 16px; font-size:13px; font-weight:700; cursor:pointer; margin-top:8px;}
+  .send-btn:disabled{opacity:0.5; cursor:default;}
+  .feed-name{font-size:14px; font-weight:500;}
+  .feed-time{font-size:12px; color:var(--text-muted);}
+  .tag-pill{font-size:11px; padding:3px 10px; border-radius:20px; background:var(--surface-2); color:var(--text-muted); display:inline-block; margin:6px 0;}
+  .ai-comment{font-size:12px; color:var(--purple); background:var(--purple-bg); border-radius:8px; padding:6px 10px; margin:6px 0 8px; display:inline-block;}
+  .ai-comment.pending{color:var(--text-muted); background:var(--surface-2);}
+  .board-row{display:flex; align-items:center; gap:12px; padding:10px 4px; border-bottom:1px solid var(--border);}
+  .rank{font-family:'Bebas Neue', sans-serif; font-size:20px; color:var(--text-muted); width:22px;}
+  .avatar-sm{width:34px; height:34px; border-radius:50%; background:var(--info-bg); color:var(--info); display:flex; align-items:center; justify-content:center; font-weight:700; font-size:13px; flex-shrink:0;}
+  .board-name{font-size:14px; font-weight:500;}
+  .board-role{font-size:12px; color:var(--text-muted);}
+  .streak{font-size:13px; color:var(--accent); display:flex; align-items:center; gap:4px;}
+  .pts{font-size:14px; font-weight:700; min-width:52px; text-align:right;}
+  .qa-taskify-row{display:flex; gap:8px; margin-top:8px;}
+  .qa-taskify-row select{flex:1; font-size:12px; padding:6px 8px;}
+  .qa-taskify-row button{font-size:12px; padding:6px 10px; background:var(--surface-2); border:1px solid var(--border); color:var(--text); border-radius:8px; cursor:pointer;}
+  .converted{font-size:12px; color:var(--success); margin-top:6px;}
+  .note{font-size:12px; color:var(--text-muted); margin-top:24px; border-top:1px solid var(--border); padding-top:14px;}
+  .whoami{font-size:12px; color:var(--text-muted); margin-bottom:16px;}
+  .whoami button{background:none; border:none; color:var(--info); cursor:pointer; font-size:12px; text-decoration:underline; padding:0;}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <p class="eyebrow">GASSHUKU CONTROL ROOM</p>
+  <h1 class="display">合宿 準備ダッシュボード</h1>
+  <p class="whoami" id="whoami">読み込み中…</p>
+
+  <div class="form-card" id="name-overlay" style="display:none;">
+    <p style="font-size:14px; margin:0 0 8px;">お名前(表示名)を入力してください</p>
+    <div class="row">
+      <input type="text" id="name-input" placeholder="例）田中太郎" />
+      <button class="send-btn" id="name-submit" style="margin-top:0;">決定</button>
+    </div>
+    <p id="name-error" style="font-size:12px; color:var(--danger); margin:8px 0 0;"></p>
+  </div>
+
+  <div class="stat-row">
+    <div class="stat-card"><p class="label">プログラム数</p><p class="value mono" id="phase-count">-</p></div>
+    <div class="stat-card"><p class="label">全体進捗</p><p class="value mono" id="overall-pct">-</p></div>
+    <div class="stat-card"><p class="label">本日の投稿</p><p class="value mono" id="today-count">-</p></div>
+    <div class="stat-card"><p class="label">未対応の提案</p><p class="value mono" id="qa-pending-count">-</p></div>
+  </div>
+
+  <div class="mvp-pass" id="mvp-pass">
+    <p style="font-size:13px; color:var(--text-muted);">MVP読み込み中…</p>
+  </div>
+
+  <div class="tabs">
+    <button class="tab-btn active" data-tab="progress">進捗管理</button>
+    <button class="tab-btn" data-tab="daily">今日の実績</button>
+    <button class="tab-btn" data-tab="board">称賛ボード</button>
+    <button class="tab-btn" data-tab="qa">作業提案・Q&A</button>
+  </div>
+
+  <div class="panel active" id="panel-progress"></div>
+  <div class="panel" id="panel-daily"></div>
+  <div class="panel" id="panel-board"></div>
+  <div class="panel" id="panel-qa"></div>
+
+  <p class="note">このアプリはURLを知っていれば誰でも閲覧・投稿できます。表示名以外の個人情報（住所・電話番号など）は投稿しないでください。</p>
+</div>
+
+<script>
+// ============================================================
+// 診断用：何かエラーが起きたら、必ず画面に表示する監視役
+// これはSupabase読み込みより前に置くことで、
+// 後続の処理がどこで止まっても捕まえられるようにしてある
+// ============================================================
+window.addEventListener('error', function(e){
+  var el = document.getElementById('whoami');
+  if (el) el.textContent = '⚠️ エラー: ' + e.message + '(' + (e.filename || '') + ':' + e.lineno + ')';
+});
+window.addEventListener('unhandledrejection', function(e){
+  var el = document.getElementById('whoami');
+  if (el) el.textContent = '⚠️ 非同期エラー: ' + (e.reason && e.reason.message ? e.reason.message : e.reason);
+});
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<script>
+// ============================================================
+// Supabaseライブラリが本当に読み込めているかの確認
+// ============================================================
+if (typeof window.supabase === 'undefined') {
+  document.getElementById('whoami').textContent = '⚠️ Supabaseライブラリの読み込みに失敗しました(CDN)';
+  throw new Error('Supabase library failed to load from CDN');
+}
+</script>
+
+<script>
+// ============================================================
+// Supabase接続設定
+// ここの2つを、自分のSupabaseプロジェクトの値に置き換えてください
+// (Settings > API から取得できます)
+// ============================================================
+const SUPABASE_URL = 'https://xtghwxdngpmznhtwahht.supabase.co';
+const SUPABASE_ANON_KEY = 'sb_publishable_3pq2WkWi5_nlDPG8vi8WUg_9iJ0_Duj';
+
+const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+
+let currentUser = null; // { id, name, points, streak }
+let expandedPhases = new Set();
+
+// ------------------------------------------------------------
+// ユーザー識別（認証なし・簡易版）
+// 一度名前を入力したらブラウザに保存し、次回から聞かない
+// 注意：これはこのHTMLを実際にデプロイした先(GitHub Pagesなど)で動作します。
+//       Claudeのチャット内プレビューでは保存が効かない場合があります。
+// ------------------------------------------------------------
+async function ensureUser() {
+  const savedId = localStorage.getItem('gasshuku_user_id');
+  if (savedId) {
+    try {
+      const { data, error } = await supabase.from('users').select('*').eq('id', savedId).single();
+      if (data && !error) { currentUser = data; return; }
+    } catch (e) { console.error(e); }
+  }
+  await askForName();
+}
+
+function askForName() {
+  return new Promise((resolve) => {
+    const overlay = document.getElementById('name-overlay');
+    const errorEl = document.getElementById('name-error');
+    overlay.style.display = 'block';
+
+    document.getElementById('name-submit').addEventListener('click', async () => {
+      const name = document.getElementById('name-input').value.trim();
+      errorEl.textContent = '';
+      if (!name) {
+        errorEl.textContent = 'お名前を入力してください';
+        return;
+      }
+      const { data, error } = await supabase.from('users').insert({ name }).select().single();
+      if (error) {
+        errorEl.textContent = '登録に失敗しました: ' + error.message;
+        console.error(error);
+        return;
+      }
+      currentUser = data;
+      localStorage.setItem('gasshuku_user_id', data.id);
+      overlay.style.display = 'none';
+      resolve();
+    });
+  });
+}
+
+function renderWhoAmI() {
+  document.getElementById('whoami').innerHTML =
+    `${currentUser.name} としてログイン中　<button id="switch-user">名前を変える</button>`;
+  document.getElementById('switch-user').addEventListener('click', () => {
+    localStorage.removeItem('gasshuku_user_id');
+    location.reload();
+  });
+}
+
+// ------------------------------------------------------------
+// 進捗管理タブ
+// ------------------------------------------------------------
+let phasesCache = [];
+
+function statusInfo(pct){
+  if(pct===100) return {label:"完了", cls:"done"};
+  if(pct===0) return {label:"未着手", cls:"todo"};
+  return {label:"進行中", cls:"doing"};
+}
+
+async function loadPhases() {
+  // .select('*, tasks(*)') は SQLのJOINに近いことをSupabaseにやらせている書き方。
+  // 「phasesを取ってきて、それぞれにぶら下がるtasksも一緒に埋め込んで」という意味。
+  const { data, error } = await supabase
+    .from('phases')
+    .select('*, tasks(*)')
+    .order('order_index', { ascending: true });
+  if (error) { console.error(error); return; }
+  phasesCache = data;
+  renderProgress();
+  populatePhaseSelects();
+}
+
+function renderProgress(){
+  const wrap = document.getElementById("panel-progress");
+  wrap.innerHTML = "";
+  let doneTotal = 0, taskTotal = 0;
+  phasesCache.forEach((p, idx)=>{
+    const tasks = p.tasks || [];
+    const done = tasks.filter(t=>t.done).length;
+    const total = tasks.length;
+    doneTotal += done; taskTotal += total;
+    const pct = total ? Math.round(done/total*100) : 0;
+    const s = statusInfo(pct);
+    const isOpen = expandedPhases.has(p.id);
+    const card = document.createElement("div");
+    card.className = "phase-card";
+    const head = document.createElement("div");
+    head.className = "phase-head";
+    head.innerHTML = `
+      <div class="phase-top">
+        <span class="phase-name">${isOpen ? "▾" : "▸"} ${p.name}</span>
+        <span class="badge ${s.cls}">${s.label}</span>
+      </div>
+      <div class="phase-bottom">
+        <div class="bar-track"><div class="bar-fill ${s.cls}" style="width:${pct}%;"></div></div>
+        <span class="mono" style="font-size:12px; color:var(--text-muted); min-width:36px; text-align:right;">${done}/${total}</span>
+      </div>`;
+    head.addEventListener("click", ()=>{
+      if(expandedPhases.has(p.id)) expandedPhases.delete(p.id); else expandedPhases.add(p.id);
+      renderProgress();
+    });
+    card.appendChild(head);
+    if(isOpen){
+      const list = document.createElement("div");
+      list.className = "task-list";
+      tasks.forEach((t)=>{
+        const item = document.createElement("label");
+        item.className = "task-item" + (t.done ? " done" : "");
+        item.innerHTML = `<input type="checkbox" ${t.done ? "checked" : ""} /><span>${t.title}</span>`;
+        item.querySelector("input").addEventListener("change", async (e)=>{
+          e.stopPropagation();
+          await supabase.from('tasks').update({ done: e.target.checked }).eq('id', t.id);
+          await loadPhases();
+        });
+        item.addEventListener("click", (e)=>e.stopPropagation());
+        list.appendChild(item);
+      });
+      card.appendChild(list);
+    }
+    wrap.appendChild(card);
+  });
+  document.getElementById("overall-pct").textContent = taskTotal ? Math.round(doneTotal/taskTotal*100) + "%" : "0%";
+  document.getElementById("phase-count").textContent = phasesCache.length;
+}
+
+function populatePhaseSelects(){
+  const options = phasesCache.map(p=>`<option value="${p.id}">${p.name}</option>`).join("");
+  const entrySelect = document.getElementById('phase-select');
+  if (entrySelect) entrySelect.innerHTML = options;
+}
+
+async function addTaskToPhase(phaseId, text){
+  await supabase.from('tasks').insert({ phase_id: phaseId, title: text });
+  expandedPhases.add(phaseId);
+  await loadPhases();
+}
+
+// ------------------------------------------------------------
+// 今日の実績タブ
+// ------------------------------------------------------------
+const dailyPanel = document.getElementById("panel-daily");
+dailyPanel.innerHTML = `
+  <div class="form-card">
+    <select id="phase-select" style="margin-bottom:8px;"></select>
+    <textarea id="entry-text" rows="3" placeholder="例）オープニング演出の脚本の第一稿を書き上げた"></textarea>
+    <div style="display:flex; justify-content:flex-end;"><button class="send-btn" id="submit-entry">実績を投稿</button></div>
+  </div>
+  <div id="feed"></div>`;
+
+async function loadEntries() {
+  // entry_cheers(user_id) を埋め込むと、そのentryに誰がcheerしたかの一覧が配列で付いてくる
+  const { data, error } = await supabase
+    .from('entries')
+    .select('*, users(name), phases(name), entry_cheers(user_id)')
+    .order('created_at', { ascending: false })
+    .limit(50);
+  if (error) { console.error(error); return; }
+
+  const feedEl = document.getElementById("feed");
+  feedEl.innerHTML = "";
+  const todayStr = new Date().toDateString();
+  let todayCount = 0;
+
+  data.forEach(entry => {
+    if (new Date(entry.created_at).toDateString() === todayStr) todayCount++;
+
+    const cheerCount = (entry.entry_cheers || []).length;
+    const iCheered = currentUser && (entry.entry_cheers || []).some(c => c.user_id === currentUser.id);
+
+    const el = document.createElement("div");
+    el.className = "card";
+
+    let aiHtml = '';
+    if (entry.ai_status === 'done' && entry.ai_comment) {
+      aiHtml = `<div class="ai-comment">🤖 ${entry.ai_comment}</div><br>`;
+    } else if (entry.ai_status === 'pending') {
+      aiHtml = `<div class="ai-comment pending">🤖 AI評価中…</div><br>`;
+    } else if (entry.ai_status === 'error') {
+      aiHtml = `<div class="ai-comment pending">🤖 AI評価に失敗しました</div><br>`;
+    }
+
+    el.innerHTML = `
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        <span class="feed-name">${entry.users?.name ?? '(不明)'}</span>
+        <span class="feed-time">${new Date(entry.created_at).toLocaleString('ja-JP')}</span>
+      </div>
+      <span class="tag-pill">${entry.phases?.name ?? '未分類'}</span>
+      <p style="font-size:14px; margin:6px 0 8px;">${entry.text}</p>
+      ${aiHtml}
+      <button class="cheer-btn ${iCheered ? 'active' : ''}"><span class="heart">♥</span> <span class="cheer-count">${cheerCount}</span></button>`;
+
+    el.querySelector(".cheer-btn").addEventListener("click", async () => {
+      if (!currentUser) return;
+      if (iCheered) {
+        await supabase.from('entry_cheers').delete().eq('entry_id', entry.id).eq('user_id', currentUser.id);
+      } else {
+        await supabase.from('entry_cheers').insert({ entry_id: entry.id, user_id: currentUser.id });
+      }
+      await loadEntries();
+    });
+
+    feedEl.appendChild(el);
+  });
+
+  document.getElementById("today-count").textContent = todayCount;
+}
+
+document.getElementById("submit-entry").addEventListener("click", async ()=>{
+  const text = document.getElementById("entry-text").value.trim();
+  const phaseId = document.getElementById("phase-select").value;
+  if(!text || !phaseId || !currentUser) return;
+  const btn = document.getElementById("submit-entry");
+  btn.disabled = true;
+  await supabase.from('entries').insert({ user_id: currentUser.id, phase_id: phaseId, text });
+  document.getElementById("entry-text").value = "";
+  btn.disabled = false;
+  await loadEntries();
+});
+
+// ------------------------------------------------------------
+// 称賛ボードタブ
+// ------------------------------------------------------------
+async function loadBoard() {
+  const { data, error } = await supabase
+    .from('users')
+    .select('*')
+    .order('points', { ascending: false })
+    .limit(20);
+  if (error) { console.error(error); return; }
+
+  const boardPanel = document.getElementById("panel-board");
+  boardPanel.innerHTML = "";
+  data.forEach((m, i)=>{
+    const row = document.createElement("div");
+    row.className = "board-row";
+    row.innerHTML = `
+      <span class="rank">${i+1}</span>
+      <div class="avatar-sm">${m.name.slice(0,1)}</div>
+      <div style="flex:1;"><p class="board-name">${m.name}</p><p class="board-role">${m.role ?? ''}</p></div>
+      <div class="streak">🔥${m.streak}</div>
+      <span class="pts mono">${m.points}pt</span>`;
+    boardPanel.appendChild(row);
+  });
+}
+
+// ------------------------------------------------------------
+// MVPパス
+// ------------------------------------------------------------
+async function loadMvp() {
+  const { data, error } = await supabase
+    .from('mvp_awards')
+    .select('*, users(name)')
+    .order('award_date', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  const wrap = document.getElementById('mvp-pass');
+  if (error || !data) {
+    wrap.innerHTML = `<p style="font-size:13px; color:var(--text-muted);">まだMVPが選出されていません。</p>`;
+    return;
+  }
+  wrap.innerHTML = `
+    <div class="mvp-avatar">${(data.users?.name ?? '?').slice(0,1)}</div>
+    <div style="flex:1;">
+      <p class="mvp-tag display">TODAY'S MVP</p>
+      <p class="mvp-name">${data.users?.name ?? '(不明)'}</p>
+      <p class="mvp-comment">${data.comment ?? ''}</p>
+      <div style="display:flex; align-items:center; gap:8px;">
+        <button class="cheer-btn" id="mvp-cheer">♥ <span id="mvp-count">${data.cheer_count}</span></button>
+        <span style="font-size:12px; color:var(--text-muted);">からの称賛</span>
+      </div>
+    </div>`;
+  document.getElementById('mvp-cheer').addEventListener('click', async () => {
+    await supabase.from('mvp_awards').update({ cheer_count: data.cheer_count + 1 }).eq('id', data.id);
+    await loadMvp();
+  });
+}
+
+// ------------------------------------------------------------
+// 作業提案・Q&Aタブ
+// ------------------------------------------------------------
+const qaPanel = document.getElementById("panel-qa");
+qaPanel.innerHTML = `
+  <div class="form-card">
+    <div class="row" style="margin-bottom:8px;">
+      <select id="qa-category" style="max-width:150px;">
+        <option value="追加希望">追加希望</option>
+        <option value="抜け漏れ指摘">抜け漏れ指摘</option>
+        <option value="オプション提案">オプション提案</option>
+      </select>
+      <input id="qa-input" type="text" placeholder="例）当日の緊急連絡フローが決まっていない気がします" />
+    </div>
+    <div style="display:flex; justify-content:flex-end;"><button class="send-btn" id="qa-send">相談する</button></div>
+  </div>
+  <div id="qa-list"></div>`;
+
+const catCls = {"追加希望":"add", "抜け漏れ指摘":"missing", "オプション提案":"option"};
+
+async function loadQa() {
+  const { data, error } = await supabase
+    .from('qa_items')
+    .select('*, users(name)')
+    .order('created_at', { ascending: false });
+  if (error) { console.error(error); return; }
+
+  const qaList = document.getElementById("qa-list");
+  qaList.innerHTML = "";
+  let pending = 0;
+
+  data.forEach(entry => {
+    if (entry.status === '未対応') pending++;
+
+    const el = document.createElement("div");
+    el.className = "card";
+    el.innerHTML = `
+      <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:8px;">
+        <span class="badge ${catCls[entry.category]}">${entry.category}</span>
+        <select class="qa-status" style="font-size:12px; padding:4px 8px;">
+          <option ${entry.status==="未対応"?"selected":""}>未対応</option>
+          <option ${entry.status==="検討中"?"selected":""}>検討中</option>
+          <option ${entry.status==="採用"?"selected":""}>採用</option>
+          <option ${entry.status==="却下"?"selected":""}>却下</option>
+        </select>
+      </div>
+      <p style="font-size:12px; color:var(--text-muted); margin:8px 0 2px;">${entry.users?.name ?? '(不明)'} より</p>
+      <p style="font-size:14px; margin:0 0 8px;">${entry.question}</p>
+      <div class="taskify-slot"></div>`;
+
+    const slot = el.querySelector(".taskify-slot");
+    if (entry.status === "採用") {
+      if (entry.converted_task_id) {
+        slot.innerHTML = `<p class="converted">✓ タスク化済み</p>`;
+      } else {
+        slot.innerHTML = `<div class="qa-taskify-row">
+          <select class="qa-phase-target">${phasesCache.map(p=>`<option value="${p.id}">${p.name}</option>`).join("")}</select>
+          <button class="qa-taskify">タスク化する</button>
+        </div>`;
+        slot.querySelector(".qa-taskify").addEventListener("click", async () => {
+          const phaseId = slot.querySelector(".qa-phase-target").value;
+          const { data: newTask } = await supabase.from('tasks').insert({ phase_id: phaseId, title: entry.question }).select().single();
+          if (newTask) {
+            await supabase.from('qa_items').update({ converted_task_id: newTask.id }).eq('id', entry.id);
+          }
+          await loadPhases();
+          await loadQa();
+        });
+      }
+    }
+
+    el.querySelector(".qa-status").addEventListener("change", async (e) => {
+      await supabase.from('qa_items').update({ status: e.target.value }).eq('id', entry.id);
+      await loadQa();
+    });
+
+    qaList.appendChild(el);
+  });
+
+  document.getElementById("qa-pending-count").textContent = pending;
+}
+
+document.getElementById("qa-send").addEventListener("click", async ()=>{
+  const question = document.getElementById("qa-input").value.trim();
+  const category = document.getElementById("qa-category").value;
+  if(!question || !currentUser) return;
+  await supabase.from('qa_items').insert({ user_id: currentUser.id, category, question, status: '未対応' });
+  document.getElementById("qa-input").value = "";
+  await loadQa();
+});
+
+// ------------------------------------------------------------
+// タブ切り替え
+// ------------------------------------------------------------
+document.querySelectorAll(".tab-btn").forEach(b=>{
+  b.addEventListener("click", ()=>{
+    document.querySelectorAll(".tab-btn").forEach(x=>x.classList.remove("active"));
+    document.querySelectorAll(".panel").forEach(x=>x.classList.remove("active"));
+    b.classList.add("active");
+    document.getElementById("panel-" + b.dataset.tab).classList.add("active");
+  });
+});
+
+// ------------------------------------------------------------
+// 初期化
+// ------------------------------------------------------------
+(async function init(){
+  try {
+    await ensureUser();
+    renderWhoAmI();
+    await loadPhases();
+    await loadEntries();
+    await loadBoard();
+    await loadMvp();
+    await loadQa();
+  } catch (e) {
+    console.error(e);
+    document.getElementById('whoami').textContent = 'エラーが発生しました: ' + e.message;
+  }
+})();
+</script>
+</body>
+</html>
