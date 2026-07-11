@@ -69,7 +69,7 @@
   .bar-fill.todo{background:var(--border);}
   .phase-bottom{display:flex; align-items:center; gap:10px;}
   .task-list{border-top:1px solid var(--border); padding:10px 16px 14px; display:flex; flex-direction:column; gap:8px;}
-  .task-item{display:flex; align-items:center; gap:8px; font-size:13px; cursor:pointer;}
+  .task-item{display:flex; align-items:center; justify-content:space-between; gap:8px; font-size:13px; cursor:pointer;}
   .task-item input{accent-color:var(--accent);}
   .task-item.done span{color:var(--text-muted); text-decoration:line-through;}
   .card{background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:14px 16px; margin-bottom:10px;}
@@ -94,7 +94,38 @@
   .qa-taskify-row{display:flex; gap:8px; margin-top:8px;}
   .qa-taskify-row select{flex:1; font-size:12px; padding:6px 8px;}
   .qa-taskify-row button{font-size:12px; padding:6px 10px; background:var(--surface-2); border:1px solid var(--border); color:var(--text); border-radius:8px; cursor:pointer;}
+  .task-add-row{display:flex; gap:8px; margin-top:2px;}
+  .task-add-row input{flex:1; font-size:13px; padding:7px 9px;}
+  .task-add-row button{font-size:12px; padding:7px 12px; background:var(--surface-2); border:1px solid var(--border); color:var(--text); border-radius:8px; cursor:pointer; white-space:nowrap; font-family:inherit;}
+  .task-add-row button:hover{border-color:var(--accent);}
   .converted{font-size:12px; color:var(--success); margin-top:6px;}
+  .name-gate-card{background:var(--surface); border:2px solid var(--accent); border-radius:16px; padding:24px; margin-bottom:20px; box-shadow:0 0 0 4px var(--accent-dim, rgba(242,177,52,0.12));}
+  .name-gate-card .step-badge{display:inline-block; background:var(--accent); color:#1a1408; font-size:11px; font-weight:700; letter-spacing:0.05em; padding:3px 10px; border-radius:100px; margin-bottom:10px;}
+  .name-gate-card .headline{font-size:17px; font-weight:700; color:var(--text); margin:0 0 6px;}
+  .name-gate-card .sub{font-size:13px; color:var(--text-muted); margin:0 0 14px;}
+  .task-hint{font-size:12px; color:var(--text-muted); margin:6px 0 0; font-style:italic;}
+  .assignee-tag{font-size:11px; color:var(--accent); background:var(--surface-2); padding:2px 8px; border-radius:100px; white-space:nowrap;}
+  .task-assignee-select{font-size:11px; padding:3px 6px; max-width:110px;}
+  .countdown-banner{background:linear-gradient(135deg, var(--surface) 0%, var(--surface-2) 100%); border:1px solid var(--accent); border-radius:14px; padding:16px 20px; margin-bottom:20px; display:flex; align-items:baseline; justify-content:center; gap:10px; text-align:center; flex-wrap:wrap;}
+  .countdown-banner .num{font-family:'Bebas Neue', sans-serif; font-size:44px; color:var(--accent); line-height:1;}
+  .countdown-banner .time{font-family:'JetBrains Mono', monospace; font-size:26px; color:var(--accent); line-height:1;}
+  .countdown-banner .label{font-size:13px; color:var(--text-muted);}
+  .usage-guide{background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:14px 18px; margin-bottom:20px; font-size:13px;}
+  .usage-guide summary{cursor:pointer; font-weight:500; color:var(--text); list-style:none; display:flex; align-items:center; gap:6px; user-select:none;}
+  .usage-guide summary::-webkit-details-marker{display:none;}
+  .usage-guide summary::before{content:"▸"; color:var(--accent);}
+  .usage-guide[open] summary::before{content:"▾";}
+  .usage-guide .usage-content{margin-top:12px; display:flex; flex-direction:column; gap:8px; color:var(--text-muted); line-height:1.6;}
+  .usage-guide .usage-content b{color:var(--text);}
+  .delete-btn{background:none; border:none; color:var(--text-muted); cursor:pointer; font-size:13px; padding:2px 7px; border-radius:6px; line-height:1.6;}
+  .delete-btn:hover{color:var(--danger); background:var(--danger-bg);}
+  .task-item .task-item-main{display:flex; align-items:center; gap:8px; flex:1; min-width:0;}
+  .phase-name-wrap{display:flex; align-items:center; gap:6px;}
+  .ask-log-empty{font-size:13px; color:var(--text-muted); padding:8px 4px;}
+  .ask-question{font-size:12px; color:var(--text-muted); margin:0 0 6px;}
+  .ask-question b{color:var(--text); font-weight:500;}
+  .ask-answer{font-size:13px; line-height:1.7; white-space:pre-wrap;}
+  .ask-sources{display:flex; flex-wrap:wrap; gap:4px; margin-top:10px;}
   .note{font-size:12px; color:var(--text-muted); margin-top:24px; border-top:1px solid var(--border); padding-top:14px;}
   .whoami{font-size:12px; color:var(--text-muted); margin-bottom:16px;}
   .whoami button{background:none; border:none; color:var(--info); cursor:pointer; font-size:12px; text-decoration:underline; padding:0;}
@@ -105,53 +136,78 @@
 
   <p class="eyebrow">GASSHUKU CONTROL ROOM</p>
   <h1 class="display">合宿 準備ダッシュボード</h1>
-  <p class="whoami" id="whoami">読み込み中…</p>
+  <div class="countdown-banner" id="countdown-banner"></div>
+  <p class="whoami" id="global-error"></p>
 
-  <div class="form-card" id="name-overlay" style="display:none;">
-    <p style="font-size:14px; margin:0 0 8px;">お名前(表示名)を入力してください</p>
+  <!-- 画面1: 名前入力ゲート。名前が確定するまではこれだけを表示する -->
+  <div class="form-card name-gate-card" id="name-gate" style="display:none;">
+    <span class="step-badge">STEP 1</span>
+    <p class="headline">👋 まずはお名前を入力してください</p>
+    <p class="sub">入力すると、タスクの担当や実績の投稿があなたの名前で記録されます。</p>
     <div class="row">
-      <input type="text" id="name-input" placeholder="例）田中太郎" />
+      <input type="text" id="name-input" placeholder="例）堀江さん、溝口さん" />
       <button class="send-btn" id="name-submit" style="margin-top:0;">決定</button>
     </div>
     <p id="name-error" style="font-size:12px; color:var(--danger); margin:8px 0 0;"></p>
   </div>
 
-  <div class="stat-row">
-    <div class="stat-card"><p class="label">プログラム数</p><p class="value mono" id="phase-count">-</p></div>
-    <div class="stat-card"><p class="label">全体進捗</p><p class="value mono" id="overall-pct">-</p></div>
-    <div class="stat-card"><p class="label">本日の投稿</p><p class="value mono" id="today-count">-</p></div>
-    <div class="stat-card"><p class="label">未対応の提案</p><p class="value mono" id="qa-pending-count">-</p></div>
-  </div>
+  <!-- 画面2: 名前確定後のダッシュボード本体 -->
+  <div id="dashboard" style="display:none;">
 
-  <div class="mvp-pass" id="mvp-pass">
-    <p style="font-size:13px; color:var(--text-muted);">MVP読み込み中…</p>
-  </div>
+    <p class="whoami" id="whoami"></p>
 
-  <div class="tabs">
-    <button class="tab-btn active" data-tab="progress">進捗管理</button>
-    <button class="tab-btn" data-tab="daily">今日の実績</button>
-    <button class="tab-btn" data-tab="board">称賛ボード</button>
-    <button class="tab-btn" data-tab="qa">作業提案・Q&A</button>
-  </div>
-
-  <div class="panel active" id="panel-progress">
-    <div class="form-card">
-      <p style="font-size:14px; margin:0 0 8px;">大項目を追加</p>
-      <div class="row" style="margin-bottom:8px;">
-        <input type="text" id="new-phase-name" placeholder="例）備品発注チーム" />
-        <input type="text" id="new-phase-type" list="phase-type-list" placeholder="種別（例：準備・運営）" style="max-width:180px;" />
+    <details class="usage-guide">
+      <summary>使い方を見る</summary>
+      <div class="usage-content">
+        <p><b>進捗管理</b>: 「大項目(チーム/カテゴリ)」を追加し、その中に具体的な「タスク」を追加してチェックしていきます。上の「全体進捗」は、全部の大項目に含まれるタスクのうち、完了したものの割合です。</p>
+        <p><b>今日の進捗</b>: 今日やったことをここに投稿します。AIが内容にコメントを返し、他の人が♥で称賛できます。過去の投稿は自動でアーカイブされ、「過去のログを見る」から確認できます。</p>
+        <p><b>称賛ボード</b>: メンバーごとの獲得ポイント・連続投稿(🔥)のランキングです。ポイントは主に「今日の進捗」への投稿やもらった♥から積み上がります。</p>
+        <p><b>作業提案・Q&A</b>: 気になることの提案・質問はここに投稿します。ステータスを「採用」にすると、その提案をワンクリックで「進捗管理」のタスクに変換できます。</p>
+        <p><b>中崎コンシェルジュ</b>: 「今日の進捗」に投稿された内容をもとに、AIに自由に質問できます(例：「備品発注チームの進み具合は？」)。</p>
+        <p style="margin-top:4px; padding-top:8px; border-top:1px solid var(--border);">MVP(頑張った人)は現時点では自動集計ではなく、運営側が選んで登録する仕組みです。基準を自動化したい場合は運営に相談してください。</p>
       </div>
-      <datalist id="phase-type-list"></datalist>
-      <div style="display:flex; justify-content:flex-end;"><button class="send-btn" id="add-phase-btn" style="margin-top:0;">追加</button></div>
-      <p id="add-phase-error" style="font-size:12px; color:var(--danger); margin:8px 0 0;"></p>
-    </div>
-    <div id="phase-groups"></div>
-  </div>
-  <div class="panel" id="panel-daily"></div>
-  <div class="panel" id="panel-board"></div>
-  <div class="panel" id="panel-qa"></div>
+    </details>
 
-  <p class="note">このアプリはURLを知っていれば誰でも閲覧・投稿できます。表示名以外の個人情報（住所・電話番号など）は投稿しないでください。</p>
+    <div class="stat-row">
+      <div class="stat-card"><p class="label">プログラム数</p><p class="value mono" id="phase-count">-</p></div>
+      <div class="stat-card"><p class="label" title="全大項目のタスクのうち、完了したものの割合">全体進捗</p><p class="value mono" id="overall-pct">-</p></div>
+      <div class="stat-card"><p class="label">本日の投稿</p><p class="value mono" id="today-count">-</p></div>
+      <div class="stat-card"><p class="label" title="「作業提案・Q&A」でステータスが「未対応」のままの件数。ステータスを変えると減ります">未対応の提案</p><p class="value mono" id="qa-pending-count">-</p></div>
+    </div>
+
+    <div class="mvp-pass" id="mvp-pass">
+      <p style="font-size:13px; color:var(--text-muted);">MVP読み込み中…</p>
+    </div>
+
+    <div class="tabs">
+      <button class="tab-btn active" data-tab="progress">進捗管理</button>
+      <button class="tab-btn" data-tab="daily">今日の進捗</button>
+      <button class="tab-btn" data-tab="board">称賛ボード</button>
+      <button class="tab-btn" data-tab="qa">作業提案・Q&A</button>
+      <button class="tab-btn" data-tab="ask">中崎コンシェルジュ</button>
+    </div>
+
+    <div class="panel active" id="panel-progress">
+      <div class="form-card">
+        <p style="font-size:14px; margin:0 0 4px;">大項目(チームや作業カテゴリ)を追加</p>
+        <p style="font-size:12px; color:var(--text-muted); margin:0 0 10px;">まずは「備品発注チーム」「会場設営」のような大きな括りを1つ追加します。個別のToDo(タスク)は、追加した後にカードを開いて登録できます。</p>
+        <div class="row" style="margin-bottom:8px;">
+          <input type="text" id="new-phase-name" placeholder="例）備品発注チーム" />
+          <input type="text" id="new-phase-type" list="phase-type-list" placeholder="種別（例：準備・運営）" style="max-width:180px;" />
+        </div>
+        <datalist id="phase-type-list"></datalist>
+        <div style="display:flex; justify-content:flex-end;"><button class="send-btn" id="add-phase-btn" style="margin-top:0;">追加</button></div>
+        <p id="add-phase-error" style="font-size:12px; color:var(--danger); margin:8px 0 0;"></p>
+      </div>
+      <div id="phase-groups"></div>
+    </div>
+    <div class="panel" id="panel-daily"></div>
+    <div class="panel" id="panel-board"></div>
+    <div class="panel" id="panel-qa"></div>
+    <div class="panel" id="panel-ask"></div>
+
+    <p class="note">このアプリはURLを知っていれば誰でも閲覧・投稿できます。表示名以外の個人情報（住所・電話番号など）は投稿しないでください。</p>
+  </div>
 </div>
 
 <script>
@@ -161,11 +217,11 @@
 // 後続の処理がどこで止まっても捕まえられるようにしてある
 // ============================================================
 window.addEventListener('error', function(e){
-  var el = document.getElementById('whoami');
+  var el = document.getElementById('global-error');
   if (el) el.textContent = '⚠️ エラー: ' + e.message + '(' + (e.filename || '') + ':' + e.lineno + ')';
 });
 window.addEventListener('unhandledrejection', function(e){
-  var el = document.getElementById('whoami');
+  var el = document.getElementById('global-error');
   if (el) el.textContent = '⚠️ 非同期エラー: ' + (e.reason && e.reason.message ? e.reason.message : e.reason);
 });
 </script>
@@ -177,7 +233,7 @@ window.addEventListener('unhandledrejection', function(e){
 // Supabaseライブラリが本当に読み込めているかの確認
 // ============================================================
 if (typeof window.supabase === 'undefined') {
-  document.getElementById('whoami').textContent = '⚠️ Supabaseライブラリの読み込みに失敗しました(CDN)';
+  document.getElementById('global-error').textContent = '⚠️ Supabaseライブラリの読み込みに失敗しました(CDN)';
   throw new Error('Supabase library failed to load from CDN');
 }
 </script>
@@ -196,6 +252,7 @@ const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 let currentUser = null; // { id, name, points, streak }
 let expandedPhases = new Set();
+let usersCache = []; // タスクの担当者選択用に、登録済みユーザー一覧をキャッシュ
 
 // ------------------------------------------------------------
 // ユーザー識別（認証なし・簡易版）
@@ -214,29 +271,75 @@ async function ensureUser() {
   await askForName();
 }
 
+// 画面1(名前入力)→画面2(ダッシュボード)の切り替えだけを担当する関数
+function showDashboard() {
+  document.getElementById('name-gate').style.display = 'none';
+  document.getElementById('dashboard').style.display = 'block';
+}
+
 function askForName() {
   return new Promise((resolve) => {
-    const overlay = document.getElementById('name-overlay');
+    // 名前が未確定の間は、ダッシュボード側は非表示のまま。
+    // ゲート画面だけを見せる。
+    document.getElementById('name-gate').style.display = 'block';
     const errorEl = document.getElementById('name-error');
-    overlay.style.display = 'block';
+    const input = document.getElementById('name-input');
+    const btn = document.getElementById('name-submit');
 
-    document.getElementById('name-submit').addEventListener('click', async () => {
-      const name = document.getElementById('name-input').value.trim();
+    // 入力欄に最初からカーソルを合わせておく(見落とし防止)
+    input.focus();
+
+    async function submit() {
+      const name = input.value.trim();
       errorEl.textContent = '';
       if (!name) {
         errorEl.textContent = 'お名前を入力してください';
         return;
       }
+
+      btn.disabled = true;
+      btn.textContent = '確認中…';
+
+      // 同じ名前がすでに登録されていないか確認する
+      // (完全一致だけでなく、大文字小文字・前後の空白の違いも吸収)
+      const { data: existing } = await sb
+        .from('users')
+        .select('*')
+        .ilike('name', name);
+
+      if (existing && existing.length > 0) {
+        const useExisting = confirm(
+          `「${name}」はすでに登録されています。\nこの名前として続きから使いますか？\n(OK: この名前を使う / キャンセル: 別の名前を入力し直す)`
+        );
+        btn.disabled = false;
+        btn.textContent = '決定';
+        if (useExisting) {
+          currentUser = existing[0];
+          localStorage.setItem('gasshuku_user_id', existing[0].id);
+          resolve();
+        } else {
+          errorEl.textContent = '別のお名前を入力してください(例：フルネームにする)';
+          input.focus();
+        }
+        return;
+      }
+
       const { data, error } = await sb.from('users').insert({ name }).select().single();
       if (error) {
         errorEl.textContent = '登録に失敗しました: ' + error.message;
         console.error(error);
+        btn.disabled = false;
+        btn.textContent = '決定';
         return;
       }
       currentUser = data;
       localStorage.setItem('gasshuku_user_id', data.id);
-      overlay.style.display = 'none';
       resolve();
+    }
+
+    btn.addEventListener('click', submit);
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') submit();
     });
   });
 }
@@ -261,12 +364,19 @@ function statusInfo(pct){
   return {label:"進行中", cls:"doing"};
 }
 
+async function loadUsers() {
+  const { data, error } = await sb.from('users').select('id, name').order('name', { ascending: true });
+  if (error) { console.error(error); return; }
+  usersCache = data || [];
+}
+
 async function loadPhases() {
   // .select('*, tasks(*)') は SQLのJOINに近いことをSupabaseにやらせている書き方。
   // 「phasesを取ってきて、それぞれにぶら下がるtasksも一緒に埋め込んで」という意味。
+  // tasks(*, users(name)) は、タスクの担当者(assignee_id→users)の名前も一緒に取ってくる指定。
   const { data, error } = await sb
     .from('phases')
-    .select('*, tasks(*)')
+    .select('*, tasks(*, users(name))')
     .order('order_index', { ascending: true });
   if (error) { console.error(error); return; }
   phasesCache = data;
@@ -305,32 +415,97 @@ function renderProgress(){
       head.innerHTML = `
         <div class="phase-top">
           <span class="phase-name">${isOpen ? "▾" : "▸"} ${p.name}</span>
-          <span class="badge ${s.cls}">${s.label}</span>
+          <div class="phase-name-wrap">
+            <span class="badge ${s.cls}">${s.label}</span>
+            <button class="delete-btn phase-delete-btn" title="この大項目を削除">🗑</button>
+          </div>
         </div>
         <div class="phase-bottom">
           <div class="bar-track"><div class="bar-fill ${s.cls}" style="width:${pct}%;"></div></div>
           <span class="mono" style="font-size:12px; color:var(--text-muted); min-width:36px; text-align:right;">${done}/${total}</span>
         </div>`;
+      head.querySelector(".phase-delete-btn").addEventListener("click", async (e)=>{
+        e.stopPropagation();
+        const ok = confirm(`「${p.name}」を削除しますか？\nこの大項目に含まれるタスク(${total}件)もすべて削除されます。`);
+        if (!ok) return;
+        await sb.from('tasks').delete().eq('phase_id', p.id);
+        await sb.from('phases').delete().eq('id', p.id);
+        expandedPhases.delete(p.id);
+        await loadPhases();
+      });
       head.addEventListener("click", ()=>{
         if(expandedPhases.has(p.id)) expandedPhases.delete(p.id); else expandedPhases.add(p.id);
         renderProgress();
       });
       card.appendChild(head);
+
+      if(!isOpen && total === 0){
+        const hint = document.createElement("p");
+        hint.className = "task-hint";
+        hint.style.padding = "0 16px 12px";
+        hint.textContent = "▸ タップして開くと、ここにタスク(具体的なToDo)を追加できます";
+        card.appendChild(hint);
+      }
+
       if(isOpen){
         const list = document.createElement("div");
         list.className = "task-list";
         tasks.forEach((t)=>{
           const item = document.createElement("label");
           item.className = "task-item" + (t.done ? " done" : "");
-          item.innerHTML = `<input type="checkbox" ${t.done ? "checked" : ""} /><span>${t.title}</span>`;
+          const userOptions = `<option value="">担当者未定</option>` +
+            usersCache.map(u => `<option value="${u.id}" ${t.assignee_id === u.id ? "selected" : ""}>${u.name}</option>`).join("");
+          item.innerHTML = `
+            <span class="task-item-main">
+              <input type="checkbox" ${t.done ? "checked" : ""} /><span>${t.title}</span>
+            </span>
+            <select class="task-assignee-select">${userOptions}</select>
+            <button class="delete-btn task-delete-btn" title="このタスクを削除">🗑</button>`;
           item.querySelector("input").addEventListener("change", async (e)=>{
             e.stopPropagation();
             await sb.from('tasks').update({ done: e.target.checked }).eq('id', t.id);
             await loadPhases();
           });
+          item.querySelector(".task-assignee-select").addEventListener("click", (e)=>e.stopPropagation());
+          item.querySelector(".task-assignee-select").addEventListener("change", async (e)=>{
+            e.stopPropagation();
+            await sb.from('tasks').update({ assignee_id: e.target.value || null }).eq('id', t.id);
+            await loadPhases();
+          });
+          item.querySelector(".task-delete-btn").addEventListener("click", async (e)=>{
+            e.stopPropagation();
+            const ok = confirm(`タスク「${t.title}」を削除しますか？`);
+            if (!ok) return;
+            await sb.from('tasks').delete().eq('id', t.id);
+            await loadPhases();
+          });
           item.addEventListener("click", (e)=>e.stopPropagation());
           list.appendChild(item);
         });
+
+        // タスクをその場で追加する行(担当者も一緒に指定できる)
+        const addRow = document.createElement("div");
+        addRow.className = "task-add-row";
+        const newTaskUserOptions = `<option value="">担当者未定</option>` +
+          usersCache.map(u => `<option value="${u.id}">${u.name}</option>`).join("");
+        addRow.innerHTML = `
+          <input type="text" class="new-task-input" placeholder="新しいタスクを追加" />
+          <select class="task-assignee-select new-task-assignee">${newTaskUserOptions}</select>
+          <button class="task-add-btn">追加</button>`;
+        addRow.addEventListener("click", (e)=>e.stopPropagation());
+        addRow.querySelector(".task-add-btn").addEventListener("click", async (e)=>{
+          e.stopPropagation();
+          const input = addRow.querySelector(".new-task-input");
+          const assigneeSelect = addRow.querySelector(".new-task-assignee");
+          const text = input.value.trim();
+          if(!text) return;
+          const btn = addRow.querySelector(".task-add-btn");
+          btn.disabled = true;
+          btn.textContent = "追加中…";
+          await addTaskToPhase(p.id, text, assigneeSelect.value || null);
+        });
+        list.appendChild(addRow);
+
         card.appendChild(list);
       }
       wrap.appendChild(card);
@@ -353,8 +528,8 @@ function populatePhaseSelects(){
   if (entrySelect) entrySelect.innerHTML = options;
 }
 
-async function addTaskToPhase(phaseId, text){
-  await sb.from('tasks').insert({ phase_id: phaseId, title: text });
+async function addTaskToPhase(phaseId, text, assigneeId){
+  await sb.from('tasks').insert({ phase_id: phaseId, title: text, assignee_id: assigneeId || null });
   expandedPhases.add(phaseId);
   await loadPhases();
 }
@@ -366,6 +541,7 @@ document.getElementById('add-phase-btn').addEventListener('click', async () => {
   const nameInput = document.getElementById('new-phase-name');
   const typeInput = document.getElementById('new-phase-type');
   const errorEl = document.getElementById('add-phase-error');
+  const btn = document.getElementById('add-phase-btn');
   errorEl.textContent = '';
 
   const name = nameInput.value.trim();
@@ -380,6 +556,9 @@ document.getElementById('add-phase-btn').addEventListener('click', async () => {
     return;
   }
 
+  btn.disabled = true;
+  btn.textContent = '追加中…';
+
   // 既存の一番大きいorder_indexの次の番号を、新しい項目の並び順にする
   const nextIndex = phasesCache.length
     ? Math.max(...phasesCache.map(p => p.order_index)) + 1
@@ -389,16 +568,20 @@ document.getElementById('add-phase-btn').addEventListener('click', async () => {
   if (error) {
     errorEl.textContent = '追加に失敗しました: ' + error.message;
     console.error(error);
+    btn.disabled = false;
+    btn.textContent = '追加';
     return;
   }
 
   nameInput.value = '';
   typeInput.value = '';
+  btn.disabled = false;
+  btn.textContent = '追加';
   await loadPhases();
 });
 
 // ------------------------------------------------------------
-// 今日の実績タブ
+// 今日の進捗タブ
 // ------------------------------------------------------------
 const dailyPanel = document.getElementById("panel-daily");
 dailyPanel.innerHTML = `
@@ -407,7 +590,11 @@ dailyPanel.innerHTML = `
     <textarea id="entry-text" rows="3" placeholder="例）オープニング演出の脚本の第一稿を書き上げた"></textarea>
     <div style="display:flex; justify-content:flex-end;"><button class="send-btn" id="submit-entry">実績を投稿</button></div>
   </div>
-  <div id="feed"></div>`;
+  <div id="feed"></div>
+  <details class="usage-guide" id="feed-archive" style="margin-top:16px;">
+    <summary>過去のログを見る(<span id="feed-archive-count">0</span>件)</summary>
+    <div id="feed-archive-body" style="margin-top:12px; display:flex; flex-direction:column; gap:12px;"></div>
+  </details>`;
 
 async function loadEntries() {
   // entry_cheers(user_id) を埋め込むと、そのentryに誰がcheerしたかの一覧が配列で付いてくる
@@ -418,53 +605,76 @@ async function loadEntries() {
     .limit(50);
   if (error) { console.error(error); return; }
 
-  const feedEl = document.getElementById("feed");
-  feedEl.innerHTML = "";
   const todayStr = new Date().toDateString();
-  let todayCount = 0;
-
+  const todayEntries = [];
+  const pastEntries = [];
   data.forEach(entry => {
-    if (new Date(entry.created_at).toDateString() === todayStr) todayCount++;
-
-    const cheerCount = (entry.entry_cheers || []).length;
-    const iCheered = currentUser && (entry.entry_cheers || []).some(c => c.user_id === currentUser.id);
-
-    const el = document.createElement("div");
-    el.className = "card";
-
-    let aiHtml = '';
-    if (entry.ai_status === 'done' && entry.ai_comment) {
-      aiHtml = `<div class="ai-comment">🤖 ${entry.ai_comment}</div><br>`;
-    } else if (entry.ai_status === 'pending') {
-      aiHtml = `<div class="ai-comment pending">🤖 AI評価中…</div><br>`;
-    } else if (entry.ai_status === 'error') {
-      aiHtml = `<div class="ai-comment pending">🤖 AI評価に失敗しました</div><br>`;
-    }
-
-    el.innerHTML = `
-      <div style="display:flex; justify-content:space-between; align-items:center;">
-        <span class="feed-name">${entry.users?.name ?? '(不明)'}</span>
-        <span class="feed-time">${new Date(entry.created_at).toLocaleString('ja-JP')}</span>
-      </div>
-      <span class="tag-pill">${entry.phases?.name ?? '未分類'}</span>
-      <p style="font-size:14px; margin:6px 0 8px;">${entry.text}</p>
-      ${aiHtml}
-      <button class="cheer-btn ${iCheered ? 'active' : ''}"><span class="heart">♥</span> <span class="cheer-count">${cheerCount}</span></button>`;
-
-    el.querySelector(".cheer-btn").addEventListener("click", async () => {
-      if (!currentUser) return;
-      if (iCheered) {
-        await sb.from('entry_cheers').delete().eq('entry_id', entry.id).eq('user_id', currentUser.id);
-      } else {
-        await sb.from('entry_cheers').insert({ entry_id: entry.id, user_id: currentUser.id });
-      }
-      await loadEntries();
-    });
-
-    feedEl.appendChild(el);
+    if (new Date(entry.created_at).toDateString() === todayStr) todayEntries.push(entry);
+    else pastEntries.push(entry);
   });
 
-  document.getElementById("today-count").textContent = todayCount;
+  renderEntryList(document.getElementById("feed"), todayEntries, "今日はまだ投稿がありません。");
+  renderEntryList(document.getElementById("feed-archive-body"), pastEntries, "過去のログはありません。");
+  document.getElementById("feed-archive-count").textContent = pastEntries.length;
+  document.getElementById("today-count").textContent = todayEntries.length;
+}
+
+function renderEntryList(container, entries, emptyMessage) {
+  container.innerHTML = "";
+  if (entries.length === 0) {
+    container.innerHTML = `<p class="ask-log-empty">${emptyMessage}</p>`;
+    return;
+  }
+  entries.forEach(entry => container.appendChild(buildEntryCard(entry)));
+}
+
+function buildEntryCard(entry) {
+  const cheerCount = (entry.entry_cheers || []).length;
+  const iCheered = currentUser && (entry.entry_cheers || []).some(c => c.user_id === currentUser.id);
+
+  const el = document.createElement("div");
+  el.className = "card";
+
+  let aiHtml = '';
+  if (entry.ai_status === 'done' && entry.ai_comment) {
+    aiHtml = `<div class="ai-comment">🤖 ${entry.ai_comment}</div><br>`;
+  } else if (entry.ai_status === 'pending') {
+    aiHtml = `<div class="ai-comment pending">🤖 AI評価中…</div><br>`;
+  } else if (entry.ai_status === 'error') {
+    aiHtml = `<div class="ai-comment pending">🤖 AI評価に失敗しました</div><br>`;
+  }
+
+  el.innerHTML = `
+    <div style="display:flex; justify-content:space-between; align-items:center;">
+      <span class="feed-name">${entry.users?.name ?? '(不明)'}</span>
+      <span class="feed-time">${new Date(entry.created_at).toLocaleString('ja-JP')}</span>
+    </div>
+    <span class="tag-pill">${entry.phases?.name ?? '未分類'}</span>
+    <p style="font-size:14px; margin:6px 0 8px;">${entry.text}</p>
+    ${aiHtml}
+    <div style="display:flex; justify-content:space-between; align-items:center;">
+      <button class="cheer-btn ${iCheered ? 'active' : ''}"><span class="heart">♥</span> <span class="cheer-count">${cheerCount}</span></button>
+      <button class="delete-btn entry-delete-btn" title="この投稿を削除">🗑</button>
+    </div>`;
+
+  el.querySelector(".cheer-btn").addEventListener("click", async () => {
+    if (!currentUser) return;
+    if (iCheered) {
+      await sb.from('entry_cheers').delete().eq('entry_id', entry.id).eq('user_id', currentUser.id);
+    } else {
+      await sb.from('entry_cheers').insert({ entry_id: entry.id, user_id: currentUser.id });
+    }
+    await loadEntries();
+  });
+
+  el.querySelector(".entry-delete-btn").addEventListener("click", async () => {
+    const ok = confirm("この投稿を削除しますか？");
+    if (!ok) return;
+    await sb.from('entries').delete().eq('id', entry.id);
+    await loadEntries();
+  });
+
+  return el;
 }
 
 document.getElementById("submit-entry").addEventListener("click", async ()=>{
@@ -473,9 +683,11 @@ document.getElementById("submit-entry").addEventListener("click", async ()=>{
   if(!text || !phaseId || !currentUser) return;
   const btn = document.getElementById("submit-entry");
   btn.disabled = true;
+  btn.textContent = "投稿中…";
   await sb.from('entries').insert({ user_id: currentUser.id, phase_id: phaseId, text });
   document.getElementById("entry-text").value = "";
   btn.disabled = false;
+  btn.textContent = "実績を投稿";
   await loadEntries();
 });
 
@@ -544,6 +756,7 @@ async function loadMvp() {
 const qaPanel = document.getElementById("panel-qa");
 qaPanel.innerHTML = `
   <div class="form-card">
+    <p style="font-size:12px; color:var(--text-muted); margin:0 0 10px;">気になること・抜け漏れ・追加してほしいことを何でも投稿できます。ステータス(未対応→検討中→採用/却下)は誰でも変更できますが、判断に迷ったら中崎さんに確認してください。「採用」にすると、その場でタスクに変換できます。</p>
     <div class="row" style="margin-bottom:8px;">
       <select id="qa-category" style="max-width:150px;">
         <option value="追加希望">追加希望</option>
@@ -624,9 +837,91 @@ document.getElementById("qa-send").addEventListener("click", async ()=>{
   const question = document.getElementById("qa-input").value.trim();
   const category = document.getElementById("qa-category").value;
   if(!question || !currentUser) return;
+  const btn = document.getElementById("qa-send");
+  btn.disabled = true;
+  btn.textContent = "送信中…";
   await sb.from('qa_items').insert({ user_id: currentUser.id, category, question, status: '未対応' });
   document.getElementById("qa-input").value = "";
+  btn.disabled = false;
+  btn.textContent = "相談する";
   await loadQa();
+});
+
+// ------------------------------------------------------------
+// 中崎コンシェルジュ タブ(AIに実績ログについて質問できる)
+// これまでの実績ログ(entries)を根拠に、Edge Function経由で
+// Claudeに質問できるチャット風UI。会話はこのブラウザを開いている
+// 間だけ保持され、ページを再読み込みすると消える(あえて保存しない)。
+// ------------------------------------------------------------
+const askPanel = document.getElementById("panel-ask");
+askPanel.innerHTML = `
+  <div class="form-card">
+    <p style="font-size:13px; color:var(--text-muted); margin:0 0 10px;">
+      これまでの「今日の進捗」の投稿をもとに、AIが質問に答えます。例：「備品発注チームの進み具合は？」
+    </p>
+    <textarea id="ask-input" rows="2" placeholder="例）当日スタッフの集合時間はもう決まってる？"></textarea>
+    <div style="display:flex; justify-content:flex-end;"><button class="send-btn" id="ask-send">質問する</button></div>
+  </div>
+  <div id="ask-log"><p class="ask-log-empty">まだ質問がありません。気になることを聞いてみましょう。</p></div>`;
+
+function appendAskPair(question) {
+  const logEl = document.getElementById("ask-log");
+  const emptyMsg = logEl.querySelector(".ask-log-empty");
+  if (emptyMsg) emptyMsg.remove();
+
+  const card = document.createElement("div");
+  card.className = "card";
+  card.innerHTML = `
+    <p class="ask-question"><b>${currentUser?.name ?? '匿名'}</b> からの質問</p>
+    <p style="font-size:14px; margin:0 0 10px; font-weight:500;">${question}</p>
+    <div class="ai-comment pending ask-answer">🤖 考え中…</div>`;
+  logEl.prepend(card);
+  return card;
+}
+
+async function askQuestion(question) {
+  const card = appendAskPair(question);
+  const answerEl = card.querySelector(".ask-answer");
+
+  try {
+    const res = await fetch(`${SUPABASE_URL}/functions/v1/ask-entries`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${SUPABASE_ANON_KEY}`,
+      },
+      body: JSON.stringify({ question }),
+    });
+    const json = await res.json();
+    if (!res.ok) throw new Error(json.error || "回答の取得に失敗しました");
+
+    answerEl.classList.remove("ai-comment", "pending");
+    answerEl.textContent = "🤖 " + json.answer;
+
+    if (json.sources && json.sources.length) {
+      const srcWrap = document.createElement("div");
+      srcWrap.className = "ask-sources";
+      srcWrap.innerHTML = json.sources.map(s => `<span class="tag-pill">${s}</span>`).join("");
+      card.appendChild(srcWrap);
+    }
+  } catch (e) {
+    answerEl.classList.remove("pending");
+    answerEl.style.color = "var(--danger)";
+    answerEl.style.background = "var(--danger-bg)";
+    answerEl.textContent = "⚠️ " + e.message;
+  }
+}
+
+document.getElementById("ask-send").addEventListener("click", async () => {
+  const input = document.getElementById("ask-input");
+  const question = input.value.trim();
+  if (!question) return;
+  const btn = document.getElementById("ask-send");
+
+  input.value = "";
+  btn.disabled = true;
+  await askQuestion(question);
+  btn.disabled = false;
 });
 
 // ------------------------------------------------------------
@@ -642,12 +937,43 @@ document.querySelectorAll(".tab-btn").forEach(b=>{
 });
 
 // ------------------------------------------------------------
+// 本番までのカウントダウン
+// 名前入力の前後に関わらず、常に表示する
+// ------------------------------------------------------------
+function renderCountdown(){
+  const el = document.getElementById('countdown-banner');
+  const eventStart = new Date('2026-08-27T00:00:00+09:00');
+  const eventEnd = new Date('2026-08-29T00:00:00+09:00'); // 8/28終日まで
+  const now = new Date();
+
+  if (now < eventStart) {
+    const diffMs = eventStart - now;
+    const days = Math.floor(diffMs / 86400000);
+    const hh = String(Math.floor((diffMs % 86400000) / 3600000)).padStart(2, '0');
+    const mm = String(Math.floor((diffMs % 3600000) / 60000)).padStart(2, '0');
+    const ss = String(Math.floor((diffMs % 60000) / 1000)).padStart(2, '0');
+    el.innerHTML =
+      `<span class="num mono">${days}</span><span class="label">日</span>` +
+      `<span class="time mono">${hh}:${mm}:${ss}</span>` +
+      `<span class="label">RV合宿本番(8/27-28)まで</span>`;
+  } else if (now < eventEnd) {
+    el.innerHTML = `<span class="num mono">開催中</span><span class="label">RV合宿、本番真っ最中です!</span>`;
+  } else {
+    el.innerHTML = `<span class="num mono">お疲れ様でした</span><span class="label">RV合宿は終了しました</span>`;
+  }
+}
+
+// ------------------------------------------------------------
 // 初期化
 // ------------------------------------------------------------
 (async function init(){
+  renderCountdown();
+  setInterval(renderCountdown, 1000);
   try {
     await ensureUser();
+    showDashboard();
     renderWhoAmI();
+    await loadUsers();
     await loadPhases();
     await loadEntries();
     await loadBoard();
@@ -655,7 +981,7 @@ document.querySelectorAll(".tab-btn").forEach(b=>{
     await loadQa();
   } catch (e) {
     console.error(e);
-    document.getElementById('whoami').textContent = 'エラーが発生しました: ' + e.message;
+    document.getElementById('global-error').textContent = 'エラーが発生しました: ' + e.message;
   }
 })();
 </script>
