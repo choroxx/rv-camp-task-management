@@ -161,9 +161,7 @@
       <div class="usage-content">
         <p><b>進捗管理</b>: 「大項目(チーム/カテゴリ)」を追加し、その中に具体的な「タスク」を追加してチェックしていきます。上の「全体進捗」は、全部の大項目に含まれるタスクのうち、完了したものの割合です。</p>
         <p><b>今日の進捗</b>: 今日やったことをここに投稿します。AIが内容にコメントを返し、他の人が♥で称賛できます。過去の投稿は自動でアーカイブされ、「過去のログを見る」から確認できます。</p>
-        <p><b>称賛ボード</b>: メンバーごとの獲得ポイント・連続投稿(🔥)のランキングです。ポイントは主に「今日の進捗」への投稿やもらった♥から積み上がります。</p>
-        <p><b>作業提案・Q&A</b>: 気になることの提案・質問はここに投稿します。ステータスを「採用」にすると、その提案をワンクリックで「進捗管理」のタスクに変換できます。</p>
-        <p><b>中崎コンシェルジュ</b>: 「今日の進捗」に投稿された内容をもとに、AIに自由に質問できます(例：「備品発注チームの進み具合は？」)。</p>
+        <p><b>中崎コンシェルジュ（Q&A）</b>: 「今日の進捗」に投稿された内容をもとに、AIに自由に質問できます(例：「備品発注チームの進み具合は？」)。</p>
         <p style="margin-top:4px; padding-top:8px; border-top:1px solid var(--border);">MVP(頑張った人)は現時点では自動集計ではなく、運営側が選んで登録する仕組みです。基準を自動化したい場合は運営に相談してください。</p>
       </div>
     </details>
@@ -172,7 +170,7 @@
       <div class="stat-card"><p class="label">プログラム数</p><p class="value mono" id="phase-count">-</p></div>
       <div class="stat-card"><p class="label" title="全大項目のタスクのうち、完了したものの割合">全体進捗</p><p class="value mono" id="overall-pct">-</p></div>
       <div class="stat-card"><p class="label">本日の投稿</p><p class="value mono" id="today-count">-</p></div>
-      <div class="stat-card"><p class="label" title="「作業提案・Q&A」でステータスが「未対応」のままの件数。ステータスを変えると減ります">未対応の提案</p><p class="value mono" id="qa-pending-count">-</p></div>
+      <div class="stat-card" style="display:none;"><p class="label" title="「作業提案・Q&A」でステータスが「未対応」のままの件数。ステータスを変えると減ります">未対応の提案</p><p class="value mono" id="qa-pending-count">-</p></div>
     </div>
 
     <div class="mvp-pass" id="mvp-pass">
@@ -182,9 +180,9 @@
     <div class="tabs">
       <button class="tab-btn active" data-tab="progress">進捗管理</button>
       <button class="tab-btn" data-tab="daily">今日の進捗</button>
-      <button class="tab-btn" data-tab="board">称賛ボード</button>
-      <button class="tab-btn" data-tab="qa">作業提案・Q&A</button>
-      <button class="tab-btn" data-tab="ask">中崎コンシェルジュ</button>
+      <button class="tab-btn" data-tab="board" style="display:none;">称賛ボード</button>
+      <button class="tab-btn" data-tab="qa" style="display:none;">作業提案・Q&A</button>
+      <button class="tab-btn" data-tab="ask">中崎コンシェルジュ（Q&A）</button>
     </div>
 
     <div class="panel active" id="panel-progress">
@@ -252,7 +250,7 @@ const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 let currentUser = null; // { id, name, points, streak }
 let expandedPhases = new Set();
-let usersCache = []; // タスクの担当者選択用に、登録済みユーザー一覧をキャッシュ
+let slackMembersCache = []; // タスクの担当者選択用。ログインuserとは別に、Slackメンバー一覧をキャッシュ
 
 // ------------------------------------------------------------
 // ユーザー識別（認証なし・簡易版）
@@ -364,19 +362,23 @@ function statusInfo(pct){
   return {label:"進行中", cls:"doing"};
 }
 
-async function loadUsers() {
-  const { data, error } = await sb.from('users').select('id, name').order('name', { ascending: true });
+async function loadSlackMembers() {
+  // タスクの担当者は、ログイン用のusersテーブルではなく、
+  // Slackチャンネルのメンバー一覧(slack_membersテーブル)から取る。
+  // これはsync-slack-membersというEdge Functionが定期的に同期している。
+  const { data, error } = await sb.from('slack_members').select('slack_user_id, display_name').order('display_name', { ascending: true });
   if (error) { console.error(error); return; }
-  usersCache = data || [];
+  slackMembersCache = data || [];
 }
 
 async function loadPhases() {
   // .select('*, tasks(*)') は SQLのJOINに近いことをSupabaseにやらせている書き方。
   // 「phasesを取ってきて、それぞれにぶら下がるtasksも一緒に埋め込んで」という意味。
-  // tasks(*, users(name)) は、タスクの担当者(assignee_id→users)の名前も一緒に取ってくる指定。
+  // tasks(*, slack_members(display_name)) は、タスクの担当者(assignee_slack_id→slack_members)の
+  // 表示名も一緒に取ってくる指定。
   const { data, error } = await sb
     .from('phases')
-    .select('*, tasks(*, users(name))')
+    .select('*, tasks(*, slack_members(display_name))')
     .order('order_index', { ascending: true });
   if (error) { console.error(error); return; }
   phasesCache = data;
@@ -453,13 +455,13 @@ function renderProgress(){
         tasks.forEach((t)=>{
           const item = document.createElement("label");
           item.className = "task-item" + (t.done ? " done" : "");
-          const userOptions = `<option value="">担当者未定</option>` +
-            usersCache.map(u => `<option value="${u.id}" ${t.assignee_id === u.id ? "selected" : ""}>${u.name}</option>`).join("");
+          const memberOptions = `<option value="">担当者未定</option>` +
+            slackMembersCache.map(m => `<option value="${m.slack_user_id}" ${t.assignee_slack_id === m.slack_user_id ? "selected" : ""}>${m.display_name}</option>`).join("");
           item.innerHTML = `
             <span class="task-item-main">
               <input type="checkbox" ${t.done ? "checked" : ""} /><span>${t.title}</span>
             </span>
-            <select class="task-assignee-select">${userOptions}</select>
+            <select class="task-assignee-select">${memberOptions}</select>
             <button class="delete-btn task-delete-btn" title="このタスクを削除">🗑</button>`;
           item.querySelector("input").addEventListener("change", async (e)=>{
             e.stopPropagation();
@@ -469,7 +471,7 @@ function renderProgress(){
           item.querySelector(".task-assignee-select").addEventListener("click", (e)=>e.stopPropagation());
           item.querySelector(".task-assignee-select").addEventListener("change", async (e)=>{
             e.stopPropagation();
-            await sb.from('tasks').update({ assignee_id: e.target.value || null }).eq('id', t.id);
+            await sb.from('tasks').update({ assignee_slack_id: e.target.value || null }).eq('id', t.id);
             await loadPhases();
           });
           item.querySelector(".task-delete-btn").addEventListener("click", async (e)=>{
@@ -483,14 +485,14 @@ function renderProgress(){
           list.appendChild(item);
         });
 
-        // タスクをその場で追加する行(担当者も一緒に指定できる)
+        // タスクをその場で追加する行(担当者はSlackメンバー一覧から選ぶ)
         const addRow = document.createElement("div");
         addRow.className = "task-add-row";
-        const newTaskUserOptions = `<option value="">担当者未定</option>` +
-          usersCache.map(u => `<option value="${u.id}">${u.name}</option>`).join("");
+        const newTaskMemberOptions = `<option value="">担当者未定</option>` +
+          slackMembersCache.map(m => `<option value="${m.slack_user_id}">${m.display_name}</option>`).join("");
         addRow.innerHTML = `
           <input type="text" class="new-task-input" placeholder="新しいタスクを追加" />
-          <select class="task-assignee-select new-task-assignee">${newTaskUserOptions}</select>
+          <select class="task-assignee-select new-task-assignee">${newTaskMemberOptions}</select>
           <button class="task-add-btn">追加</button>`;
         addRow.addEventListener("click", (e)=>e.stopPropagation());
         addRow.querySelector(".task-add-btn").addEventListener("click", async (e)=>{
@@ -528,8 +530,8 @@ function populatePhaseSelects(){
   if (entrySelect) entrySelect.innerHTML = options;
 }
 
-async function addTaskToPhase(phaseId, text, assigneeId){
-  await sb.from('tasks').insert({ phase_id: phaseId, title: text, assignee_id: assigneeId || null });
+async function addTaskToPhase(phaseId, text, assigneeSlackId){
+  await sb.from('tasks').insert({ phase_id: phaseId, title: text, assignee_slack_id: assigneeSlackId || null });
   expandedPhases.add(phaseId);
   await loadPhases();
 }
@@ -927,12 +929,19 @@ document.getElementById("ask-send").addEventListener("click", async () => {
 // ------------------------------------------------------------
 // タブ切り替え
 // ------------------------------------------------------------
+const conciergeSound = new Audio("concierge-sound.mp3");
+
 document.querySelectorAll(".tab-btn").forEach(b=>{
   b.addEventListener("click", ()=>{
     document.querySelectorAll(".tab-btn").forEach(x=>x.classList.remove("active"));
     document.querySelectorAll(".panel").forEach(x=>x.classList.remove("active"));
     b.classList.add("active");
     document.getElementById("panel-" + b.dataset.tab).classList.add("active");
+
+    if (b.dataset.tab === "ask") {
+      conciergeSound.currentTime = 0;
+      conciergeSound.play().catch(()=>{}); // 自動再生がブロックされても静かに無視する
+    }
   });
 });
 
@@ -973,7 +982,7 @@ function renderCountdown(){
     await ensureUser();
     showDashboard();
     renderWhoAmI();
-    await loadUsers();
+    await loadSlackMembers();
     await loadPhases();
     await loadEntries();
     await loadBoard();
