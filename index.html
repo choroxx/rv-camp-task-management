@@ -69,7 +69,19 @@
   .bar-fill.todo{background:var(--border);}
   .phase-bottom{display:flex; align-items:center; gap:10px;}
   .task-list{border-top:1px solid var(--border); padding:10px 16px 14px; display:flex; flex-direction:column; gap:8px;}
-  .task-item{display:flex; align-items:center; justify-content:space-between; gap:8px; font-size:13px; cursor:pointer;}
+  .task-item{display:flex; align-items:center; justify-content:space-between; gap:8px; font-size:13px;}
+  .task-item .task-item-main{cursor:pointer;}
+  .task-item.highlight{animation:task-flash 1.6s ease-out 2;}
+  @keyframes task-flash{
+    0%{background:var(--accent-dim, rgba(242,177,52,0.25));}
+    100%{background:transparent;}
+  }
+  .type-group{margin:20px 0 8px;}
+  .type-group-summary{cursor:pointer; list-style:none; font-size:12px; letter-spacing:0.1em; color:var(--text-muted); padding:4px 0; display:flex; align-items:center; gap:6px; user-select:none;}
+  .type-group-summary::-webkit-details-marker{display:none;}
+  .type-group-summary::before{content:"▸"; color:var(--accent); font-size:11px;}
+  .type-group[open] .type-group-summary::before{content:"▾";}
+  .type-group > div{margin-top:8px;}
   .task-item input{accent-color:var(--accent);}
   .task-item.done span{color:var(--text-muted); text-decoration:line-through;}
   .card{background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:14px 16px; margin-bottom:10px;}
@@ -121,6 +133,11 @@
   .delete-btn:hover{color:var(--danger); background:var(--danger-bg);}
   .task-item .task-item-main{display:flex; align-items:center; gap:8px; flex:1; min-width:0;}
   .phase-name-wrap{display:flex; align-items:center; gap:6px;}
+  .phase-name-edit-wrap{display:flex; align-items:center; gap:6px; flex:1;}
+  .phase-name-input{flex:1; font-size:14px; padding:5px 8px;}
+  .phase-name-save-btn, .phase-name-cancel-btn{background:none; border:none; cursor:pointer; font-size:14px; padding:2px 6px; border-radius:6px; color:var(--text-muted);}
+  .phase-name-save-btn:hover{color:var(--success); background:var(--surface-2);}
+  .phase-name-cancel-btn:hover{color:var(--danger); background:var(--danger-bg);}
   .ask-log-empty{font-size:13px; color:var(--text-muted); padding:8px 4px;}
   .ask-question{font-size:12px; color:var(--text-muted); margin:0 0 6px;}
   .ask-question b{color:var(--text); font-weight:500;}
@@ -186,18 +203,23 @@
     </div>
 
     <div class="panel active" id="panel-progress">
-      <div class="form-card">
-        <p style="font-size:14px; margin:0 0 4px;">大項目(チームや作業カテゴリ)を追加</p>
-        <p style="font-size:12px; color:var(--text-muted); margin:0 0 10px;">まずは「備品発注チーム」「会場設営」のような大きな括りを1つ追加します。個別のToDo(タスク)は、追加した後にカードを開いて登録できます。</p>
-        <div class="row" style="margin-bottom:8px;">
-          <input type="text" id="new-phase-name" placeholder="例）備品発注チーム" />
-          <input type="text" id="new-phase-type" list="phase-type-list" placeholder="種別（例：準備・運営）" style="max-width:180px;" />
-        </div>
-        <datalist id="phase-type-list"></datalist>
-        <div style="display:flex; justify-content:flex-end;"><button class="send-btn" id="add-phase-btn" style="margin-top:0;">追加</button></div>
-        <p id="add-phase-error" style="font-size:12px; color:var(--danger); margin:8px 0 0;"></p>
-      </div>
       <div id="phase-groups"></div>
+      <details class="usage-guide" style="margin-top:20px;">
+        <summary>大項目(チームや作業カテゴリ)を追加</summary>
+        <div class="usage-content">
+          <p style="margin:0 0 10px;">まずは「備品発注チーム」「会場設営」のような大きな括りを1つ追加します。個別のToDo(タスク)は、追加した後にカードを開いて登録できます。チャンネルが増えたときなど、たまに使う機能です。</p>
+          <div class="row" style="margin-bottom:8px;">
+            <input type="text" id="new-phase-name" placeholder="例）備品発注チーム" />
+            <input type="text" id="new-phase-type" list="phase-type-list" placeholder="種別（例：準備・運営）" style="max-width:180px;" />
+          </div>
+          <div class="row" style="margin-bottom:8px;">
+            <select id="new-phase-channel" style="max-width:260px;"><option value="">Slackチャンネル(通知先・任意)</option></select>
+          </div>
+          <datalist id="phase-type-list"></datalist>
+          <div style="display:flex; justify-content:flex-end;"><button class="send-btn" id="add-phase-btn" style="margin-top:0;">追加</button></div>
+          <p id="add-phase-error" style="font-size:12px; color:var(--danger); margin:8px 0 0;"></p>
+        </div>
+      </details>
     </div>
     <div class="panel" id="panel-daily"></div>
     <div class="panel" id="panel-board"></div>
@@ -250,7 +272,11 @@ const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 let currentUser = null; // { id, name, points, streak }
 let expandedPhases = new Set();
+let renamingPhases = new Set(); // 名前編集中の大項目idを一時保持
+let collapsedTypes = new Set(); // 閉じているカテゴリ(type)名を保持
+let collapsedTypesInitialized = false; // 初回描画時に全カテゴリを畳むための一度きりのフラグ
 let slackMembersCache = []; // タスクの担当者選択用。ログインuserとは別に、Slackメンバー一覧をキャッシュ
+let slackChannelsCache = []; // 大項目↔Slackチャンネルの紐づけ選択用
 
 // ------------------------------------------------------------
 // ユーザー識別（認証なし・簡易版）
@@ -371,14 +397,22 @@ async function loadSlackMembers() {
   slackMembersCache = data || [];
 }
 
+async function loadSlackChannels() {
+  // 大項目に紐づけるSlackチャンネルの選択肢。sync-slack-channelsが同期している。
+  const { data, error } = await sb.from('slack_channels').select('slack_channel_id, name').order('name', { ascending: true });
+  if (error) { console.error(error); return; }
+  slackChannelsCache = data || [];
+}
+
 async function loadPhases() {
   // .select('*, tasks(*)') は SQLのJOINに近いことをSupabaseにやらせている書き方。
   // 「phasesを取ってきて、それぞれにぶら下がるtasksも一緒に埋め込んで」という意味。
   // tasks(*, slack_members(display_name)) は、タスクの担当者(assignee_slack_id→slack_members)の
   // 表示名も一緒に取ってくる指定。
+  // slack_channels(name) は、大項目自体に紐づけたSlackチャンネル名(通知先)も一緒に取ってくる指定。
   const { data, error } = await sb
     .from('phases')
-    .select('*, tasks(*, slack_members(display_name))')
+    .select('*, slack_channels(name), tasks(*, slack_members(display_name))')
     .order('order_index', { ascending: true });
   if (error) { console.error(error); return; }
   phasesCache = data;
@@ -396,11 +430,28 @@ function renderProgress(){
   const types = [];
   phasesCache.forEach(p => { if (!types.includes(p.type)) types.push(p.type); });
 
+  if (!collapsedTypesInitialized) {
+    types.forEach(type => collapsedTypes.add(type));
+    collapsedTypesInitialized = true;
+  }
+
   types.forEach(type => {
-    const groupHeader = document.createElement("p");
-    groupHeader.style.cssText = "font-size:12px; letter-spacing:0.1em; color:var(--text-muted); margin:20px 0 8px;";
-    groupHeader.textContent = type;
-    wrap.appendChild(groupHeader);
+    const groupDetails = document.createElement("details");
+    groupDetails.className = "type-group";
+    groupDetails.open = !collapsedTypes.has(type);
+    groupDetails.addEventListener("toggle", () => {
+      if (groupDetails.open) collapsedTypes.delete(type); else collapsedTypes.add(type);
+    });
+
+    const groupSummary = document.createElement("summary");
+    groupSummary.className = "type-group-summary";
+    const countInType = phasesCache.filter(p => p.type === type).length;
+    groupSummary.textContent = `${type} (${countInType})`;
+    groupDetails.appendChild(groupSummary);
+
+    const groupBody = document.createElement("div");
+    groupDetails.appendChild(groupBody);
+    wrap.appendChild(groupDetails);
 
     phasesCache.filter(p => p.type === type).forEach((p)=>{
       const tasks = p.tasks || [];
@@ -410,22 +461,76 @@ function renderProgress(){
       const pct = total ? Math.round(done/total*100) : 0;
       const s = statusInfo(pct);
       const isOpen = expandedPhases.has(p.id);
+      const isRenaming = renamingPhases.has(p.id);
       const card = document.createElement("div");
       card.className = "phase-card";
       const head = document.createElement("div");
       head.className = "phase-head";
+      const nameAreaHtml = isRenaming
+        ? `<span class="phase-name-edit-wrap">
+             <input type="text" class="phase-name-input" value="${p.name}" />
+             <button class="phase-name-save-btn" title="保存">✓</button>
+             <button class="phase-name-cancel-btn" title="キャンセル">✕</button>
+           </span>`
+        : `<span class="phase-name">${isOpen ? "▾" : "▸"} ${p.name}</span>`;
       head.innerHTML = `
         <div class="phase-top">
-          <span class="phase-name">${isOpen ? "▾" : "▸"} ${p.name}</span>
+          ${nameAreaHtml}
           <div class="phase-name-wrap">
             <span class="badge ${s.cls}">${s.label}</span>
+            <button class="delete-btn phase-rename-btn" title="この大項目の名前を変更">✏️</button>
             <button class="delete-btn phase-delete-btn" title="この大項目を削除">🗑</button>
           </div>
         </div>
         <div class="phase-bottom">
           <div class="bar-track"><div class="bar-fill ${s.cls}" style="width:${pct}%;"></div></div>
           <span class="mono" style="font-size:12px; color:var(--text-muted); min-width:36px; text-align:right;">${done}/${total}</span>
+        </div>
+        <div style="display:flex; align-items:center; gap:6px; margin-top:8px;">
+          <span style="font-size:11px; color:var(--text-muted);">通知先チャンネル:</span>
+          <select class="phase-channel-select" style="font-size:11px; padding:3px 6px; max-width:180px;">
+            <option value="">未設定</option>
+            ${slackChannelsCache.map(c => `<option value="${c.slack_channel_id}" ${p.slack_channel_id === c.slack_channel_id ? "selected" : ""}>#${c.name}</option>`).join("")}
+          </select>
         </div>`;
+
+      head.querySelector(".phase-rename-btn").addEventListener("click", (e)=>{
+        e.stopPropagation();
+        renamingPhases.add(p.id);
+        renderProgress();
+      });
+
+      if (isRenaming) {
+        const input = head.querySelector(".phase-name-input");
+        input.addEventListener("click", (e)=>e.stopPropagation());
+        input.focus();
+        input.select();
+
+        const save = async () => {
+          const newName = input.value.trim();
+          if (!newName) return;
+          await sb.from('phases').update({ name: newName }).eq('id', p.id);
+          renamingPhases.delete(p.id);
+          await loadPhases();
+        };
+        head.querySelector(".phase-name-save-btn").addEventListener("click", (e)=>{ e.stopPropagation(); save(); });
+        head.querySelector(".phase-name-cancel-btn").addEventListener("click", (e)=>{
+          e.stopPropagation();
+          renamingPhases.delete(p.id);
+          renderProgress();
+        });
+        input.addEventListener("keydown", (e)=>{
+          if (e.key === "Enter") save();
+          if (e.key === "Escape") { renamingPhases.delete(p.id); renderProgress(); }
+        });
+      }
+
+      head.querySelector(".phase-channel-select").addEventListener("click", (e)=>e.stopPropagation());
+      head.querySelector(".phase-channel-select").addEventListener("change", async (e)=>{
+        e.stopPropagation();
+        await sb.from('phases').update({ slack_channel_id: e.target.value || null }).eq('id', p.id);
+        await loadPhases();
+      });
       head.querySelector(".phase-delete-btn").addEventListener("click", async (e)=>{
         e.stopPropagation();
         const ok = confirm(`「${p.name}」を削除しますか？\nこの大項目に含まれるタスク(${total}件)もすべて削除されます。`);
@@ -453,14 +558,15 @@ function renderProgress(){
         const list = document.createElement("div");
         list.className = "task-list";
         tasks.forEach((t)=>{
-          const item = document.createElement("label");
+          const item = document.createElement("div");
           item.className = "task-item" + (t.done ? " done" : "");
+          item.dataset.taskId = t.id;
           const memberOptions = `<option value="">担当者未定</option>` +
             slackMembersCache.map(m => `<option value="${m.slack_user_id}" ${t.assignee_slack_id === m.slack_user_id ? "selected" : ""}>${m.display_name}</option>`).join("");
           item.innerHTML = `
-            <span class="task-item-main">
+            <label class="task-item-main">
               <input type="checkbox" ${t.done ? "checked" : ""} /><span>${t.title}</span>
-            </span>
+            </label>
             <select class="task-assignee-select">${memberOptions}</select>
             <button class="delete-btn task-delete-btn" title="このタスクを削除">🗑</button>`;
           item.querySelector("input").addEventListener("change", async (e)=>{
@@ -510,7 +616,7 @@ function renderProgress(){
 
         card.appendChild(list);
       }
-      wrap.appendChild(card);
+      groupBody.appendChild(card);
     });
   });
 
@@ -530,6 +636,13 @@ function populatePhaseSelects(){
   if (entrySelect) entrySelect.innerHTML = options;
 }
 
+function populatePhaseChannelSelect(){
+  const sel = document.getElementById('new-phase-channel');
+  if (!sel) return;
+  const options = slackChannelsCache.map(c => `<option value="${c.slack_channel_id}">#${c.name}</option>`).join("");
+  sel.innerHTML = `<option value="">Slackチャンネル(通知先・任意)</option>` + options;
+}
+
 async function addTaskToPhase(phaseId, text, assigneeSlackId){
   await sb.from('tasks').insert({ phase_id: phaseId, title: text, assignee_slack_id: assigneeSlackId || null });
   expandedPhases.add(phaseId);
@@ -542,12 +655,14 @@ async function addTaskToPhase(phaseId, text, assigneeSlackId){
 document.getElementById('add-phase-btn').addEventListener('click', async () => {
   const nameInput = document.getElementById('new-phase-name');
   const typeInput = document.getElementById('new-phase-type');
+  const channelSelect = document.getElementById('new-phase-channel');
   const errorEl = document.getElementById('add-phase-error');
   const btn = document.getElementById('add-phase-btn');
   errorEl.textContent = '';
 
   const name = nameInput.value.trim();
   const type = typeInput.value.trim();
+  const slackChannelId = channelSelect.value || null;
 
   if (!name) {
     errorEl.textContent = '項目名を入力してください';
@@ -566,7 +681,7 @@ document.getElementById('add-phase-btn').addEventListener('click', async () => {
     ? Math.max(...phasesCache.map(p => p.order_index)) + 1
     : 1;
 
-  const { error } = await sb.from('phases').insert({ name, type, order_index: nextIndex });
+  const { error } = await sb.from('phases').insert({ name, type, order_index: nextIndex, slack_channel_id: slackChannelId });
   if (error) {
     errorEl.textContent = '追加に失敗しました: ' + error.message;
     console.error(error);
@@ -577,6 +692,7 @@ document.getElementById('add-phase-btn').addEventListener('click', async () => {
 
   nameInput.value = '';
   typeInput.value = '';
+  channelSelect.value = '';
   btn.disabled = false;
   btn.textContent = '追加';
   await loadPhases();
@@ -983,16 +1099,48 @@ function renderCountdown(){
     showDashboard();
     renderWhoAmI();
     await loadSlackMembers();
+    await loadSlackChannels();
+    populatePhaseChannelSelect();
     await loadPhases();
     await loadEntries();
     await loadBoard();
     await loadMvp();
     await loadQa();
+    jumpToTaskFromUrl();
   } catch (e) {
     console.error(e);
     document.getElementById('global-error').textContent = 'エラーが発生しました: ' + e.message;
   }
 })();
+
+// ------------------------------------------------------------
+// Slack通知の「▶ タスクを見る」リンクから開いたとき、
+// 該当タスクが属する大項目を自動で展開し、そこまでスクロール+ハイライトする
+// ------------------------------------------------------------
+function jumpToTaskFromUrl(){
+  const taskId = new URLSearchParams(location.search).get('task');
+  if (!taskId) return;
+
+  const phase = phasesCache.find(p => (p.tasks || []).some(t => String(t.id) === taskId));
+  if (!phase) return;
+
+  // 進捗管理タブに切り替え、対象の大項目を展開してから再描画
+  document.querySelectorAll(".tab-btn").forEach(x=>x.classList.remove("active"));
+  document.querySelectorAll(".panel").forEach(x=>x.classList.remove("active"));
+  document.querySelector('.tab-btn[data-tab="progress"]').classList.add("active");
+  document.getElementById("panel-progress").classList.add("active");
+  expandedPhases.add(phase.id);
+  collapsedTypes.delete(phase.type);
+  renderProgress();
+
+  // 再描画後のDOMに対してスクロール+ハイライト
+  setTimeout(() => {
+    const el = document.querySelector(`.task-item[data-task-id="${taskId}"]`);
+    if (!el) return;
+    el.scrollIntoView({ behavior: "smooth", block: "center" });
+    el.classList.add("highlight");
+  }, 100);
+}
 </script>
 </body>
 </html>
