@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>外部折衝ログ検索</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Work+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap');
+* { box-sizing: border-box; }
+body { margin: 0; background:#141414; color:#EDEDED; font-family:'Work Sans',sans-serif; }
+.font-display { font-family:'Oswald',sans-serif; letter-spacing:0.02em; }
+.font-mono { font-family:'JetBrains Mono',monospace; }
+input:focus, select:focus, button:focus-visible { outline:2px solid #E8B94A; outline-offset:2px; }
+.header { border-bottom:3px solid #E8B94A; padding:18px 24px; background:#1B1B1B; }
+.searchbar { padding:18px 24px; background:#1B1B1B; border-bottom:1px solid #2A2A2A; display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
+.searchbar input[type="text"] { flex:1 1 320px; background:#141414; border:1px solid #3A3A3A; border-radius:4px; color:#EDEDED; padding:10px 14px; font-size:14px; }
+.searchbar select { background:#141414; border:1px solid #3A3A3A; border-radius:4px; color:#EDEDED; padding:9px 10px; font-size:12px; font-family:'JetBrains Mono',monospace; }
+.searchbar label { display:flex; align-items:center; gap:6px; font-size:12px; color:#9A9A9A; cursor:pointer; font-family:'JetBrains Mono',monospace; }
+.count { font-size:11px; color:#5A5A5A; margin-left:auto; font-family:'JetBrains Mono',monospace; }
+.layout { display:flex; }
+.list { flex:1; max-height:calc(100vh - 130px); overflow-y:auto; }
+.item { display:block; width:100%; text-align:left; background:transparent; border:none; border-bottom:1px solid #232323; border-left:3px solid transparent; padding:14px 22px; cursor:pointer; color:#EDEDED; }
+.item.active { background:#242424; }
+.item-top { display:flex; justify-content:space-between; margin-bottom:4px; }
+.item-org { font-weight:600; font-size:15px; }
+.item-status { font-size:10px; font-family:'JetBrains Mono',monospace; }
+.item-content { font-size:13px; color:#BFBFBF; line-height:1.5; }
+.item-meta { font-family:'JetBrains Mono',monospace; font-size:10px; color:#6A6A6A; margin-top:6px; }
+.detail { width:380px; border-left:1px solid #2A2A2A; padding:22px; max-height:calc(100vh - 130px); overflow-y:auto; flex-shrink:0; }
+.detail-org { font-family:'Oswald',sans-serif; font-size:18px; font-weight:700; margin-bottom:12px; }
+.field { margin-bottom:12px; }
+.field-label { font-family:'JetBrains Mono',monospace; font-size:10px; color:#E8B94A; text-transform:uppercase; margin-bottom:3px; }
+.field-value { font-size:13px; line-height:1.6; color:#DADADA; }
+.slack-link { display:inline-block; margin-top:6px; font-family:'JetBrains Mono',monospace; font-size:12px; color:#5FA8D3; text-decoration:none; border:1px solid #2A3A45; border-radius:4px; padding:6px 12px; }
+.empty { padding:32px; color:#5A5A5A; font-size:14px; }
+.error-banner { padding:14px 24px; background:#3A1F1F; color:#E8A0A0; font-family:'JetBrains Mono',monospace; font-size:12px; display:none; }
+::-webkit-scrollbar { width:6px; }
+::-webkit-scrollbar-thumb { background:#3A3A3A; border-radius:3px; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="font-display" style="font-size:22px; font-weight:700;">外部折衝ログ検索</div>
+  <div class="font-mono" style="font-size:11px; color:#7A7A7A; margin-top:2px;">SLACKに投稿した内容は、ここから全部探せます</div>
+</div>
+
+<div class="error-banner" id="error-banner"></div>
+
+<div class="searchbar">
+  <input type="text" id="keyword" placeholder="キーワードで検索(内容・次アクション・名義・折衝先...)">
+  <select id="orgFilter"></select>
+  <select id="statusFilter">
+    <option>すべて</option>
+    <option>未対応</option>
+    <option>仮押さえ中</option>
+    <option>確定</option>
+    <option>要注意</option>
+    <option>完了</option>
+  </select>
+  <label><input type="checkbox" id="onlyOpenAction"> 次アクションありのみ</label>
+  <div class="count" id="count">読み込み中…</div>
+</div>
+
+<div class="layout">
+  <div class="list" id="list"><div class="empty">読み込み中…</div></div>
+  <div class="detail" id="detail"></div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+// ============================================================
+// Supabase接続設定(外部折衝ログ専用の別プロジェクト)
+// ============================================================
+const SUPABASE_URL = 'https://szrmcsdkltpzxkhzrqwi.supabase.co';
+const SUPABASE_ANON_KEY = 'sb_publishable_XzvVJpehVc-TZjmE_Dog3g_nmtow-Wd';
+
+const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+const STATUS_COLOR = {
+  "未対応":"#6B6B6B", "仮押さえ中":"#E8B94A", "確定":"#5FA8D3", "要注意":"#D9614F", "完了":"#4A9A5A"
+};
+
+let LOGS = [];
+let selectedId = null;
+
+function formatTs(iso) {
+  const d = new Date(iso);
+  const pad = n => String(n).padStart(2,"0");
+  return `${d.getFullYear()}.${pad(d.getMonth()+1)}.${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
+function initOrgFilter() {
+  const sel = document.getElementById("orgFilter");
+  const names = ["すべて", ...new Set(LOGS.map(l => l.org_name))];
+  sel.innerHTML = names.map(n => `<option>${n}</option>`).join("");
+}
+
+function getFiltered() {
+  const kw = document.getElementById("keyword").value.trim().toLowerCase();
+  const org = document.getElementById("orgFilter").value;
+  const status = document.getElementById("statusFilter").value;
+  const onlyOpen = document.getElementById("onlyOpenAction").checked;
+
+  return LOGS.filter(l => org === "すべて" || l.org_name === org)
+    .filter(l => status === "すべて" || l.status === status)
+    .filter(l => !onlyOpen || (l.next_action && l.next_action !== "特になし"))
+    .filter(l => {
+      if (!kw) return true;
+      const hay = [l.org_name, l.content, l.next_action, l.contact_identity, l.contact_person].join(" ").toLowerCase();
+      return hay.includes(kw);
+    })
+    .sort((a,b) => new Date(b.contact_at) - new Date(a.contact_at));
+}
+
+function renderList() {
+  const filtered = getFiltered();
+  document.getElementById("count").textContent = `${filtered.length}件ヒット / 全${LOGS.length}件`;
+  const list = document.getElementById("list");
+
+  if (filtered.length === 0) {
+    list.innerHTML = `<div class="empty">条件に一致するログがありません。キーワードや絞り込みを変えてみてください。</div>`;
+    return;
+  }
+
+  list.innerHTML = filtered.map(l => `
+    <button class="item ${selectedId===l.id?'active':''}" style="border-left-color:${selectedId===l.id?STATUS_COLOR[l.status]:'transparent'}" onclick="selectItem('${l.id}')">
+      <div class="item-top">
+        <span class="item-org">${l.org_name}</span>
+        <span class="item-status" style="color:${STATUS_COLOR[l.status]}">${l.status}</span>
+      </div>
+      <div class="item-content">${l.content}</div>
+      <div class="item-meta">${formatTs(l.contact_at)} ・ ${l.contact_person} ・ ${l.contact_method}</div>
+    </button>
+  `).join("");
+}
+
+function renderDetail() {
+  const detail = document.getElementById("detail");
+  const l = LOGS.find(x => x.id === selectedId);
+  if (!l) {
+    detail.innerHTML = `<div style="color:#5A5A5A; font-size:13px;">左のリストから項目を選ぶと詳細が表示されます。</div>`;
+    return;
+  }
+  const fields = [
+    ["連絡日時", formatTs(l.contact_at)],
+    ["連絡者", l.contact_person],
+    ["連絡手段", l.contact_method],
+    ["名義・主体", l.contact_identity || "-"],
+    ["確認内容", l.content],
+    ["次のアクション", l.next_action || "-"],
+    ["ステータス", l.status],
+    ["入力元", l.source === "template_post" ? "テンプレ投稿(A)" : "モーダル入力(B)"],
+  ];
+  detail.innerHTML = `
+    <div class="detail-org">${l.org_name}</div>
+    ${fields.map(([label,value]) => `
+      <div class="field">
+        <div class="field-label">${label}</div>
+        <div class="field-value">${value}</div>
+      </div>
+    `).join("")}
+    ${l.slack_permalink ? `<a class="slack-link" href="${l.slack_permalink}" target="_blank" rel="noreferrer">元のSlack投稿を開く ↗</a>` : ""}
+  `;
+}
+
+function selectItem(id) {
+  selectedId = id;
+  renderList();
+  renderDetail();
+}
+
+["keyword","orgFilter","statusFilter","onlyOpenAction"].forEach(id => {
+  document.getElementById(id).addEventListener("input", renderList);
+});
+
+// ------------------------------------------------------------
+// Supabaseからログを読み込む
+// ------------------------------------------------------------
+async function loadLogs() {
+  const { data, error } = await sb
+    .from('negotiation_logs')
+    .select('*')
+    .order('contact_at', { ascending: false });
+
+  if (error) {
+    const banner = document.getElementById('error-banner');
+    banner.style.display = 'block';
+    banner.textContent = '⚠️ データの読み込みに失敗しました: ' + error.message;
+    document.getElementById('list').innerHTML = `<div class="empty">読み込みエラーが発生しました。</div>`;
+    document.getElementById('count').textContent = '';
+    return;
+  }
+
+  LOGS = data || [];
+  initOrgFilter();
+  renderList();
+  renderDetail();
+}
+
+loadLogs();
+</script>
+
+</body>
+</html>
