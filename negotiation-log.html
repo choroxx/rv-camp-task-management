@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="robots" content="noindex, nofollow">
-<title>外部折衝ログ検索</title>
+<title>折衝・議事録ログ検索</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Work+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap');
 * { box-sizing: border-box; }
@@ -32,6 +32,7 @@ input:focus, select:focus, button:focus-visible { outline:2px solid #E8B94A; out
 .field { margin-bottom:12px; }
 .field-label { font-family:'JetBrains Mono',monospace; font-size:10px; color:#E8B94A; text-transform:uppercase; margin-bottom:3px; }
 .field-value { font-size:13px; line-height:1.6; color:#DADADA; }
+.field-value.ai-comment { color:#E8B94A; font-style:italic; }
 .slack-link { display:inline-block; margin-top:6px; font-family:'JetBrains Mono',monospace; font-size:12px; color:#5FA8D3; text-decoration:none; border:1px solid #2A3A45; border-radius:4px; padding:6px 12px; }
 .empty { padding:32px; color:#5A5A5A; font-size:14px; }
 .error-banner { padding:14px 24px; background:#3A1F1F; color:#E8A0A0; font-family:'JetBrains Mono',monospace; font-size:12px; display:none; }
@@ -42,14 +43,14 @@ input:focus, select:focus, button:focus-visible { outline:2px solid #E8B94A; out
 <body>
 
 <div class="header">
-  <div class="font-display" style="font-size:22px; font-weight:700;">外部折衝ログ検索</div>
+  <div class="font-display" style="font-size:22px; font-weight:700;">折衝・議事録ログ検索</div>
   <div class="font-mono" style="font-size:11px; color:#7A7A7A; margin-top:2px;">SLACKに投稿した内容は、ここから全部探せます</div>
 </div>
 
 <div class="error-banner" id="error-banner"></div>
 
 <div class="searchbar">
-  <input type="text" id="keyword" placeholder="キーワードで検索(内容・次アクション・名義・折衝先...)">
+  <input type="text" id="keyword" placeholder="キーワードで検索(内容・次アクション・名義・相手・対象...)">
   <select id="orgFilter"></select>
   <select id="statusFilter">
     <option>すべて</option>
@@ -71,7 +72,7 @@ input:focus, select:focus, button:focus-visible { outline:2px solid #E8B94A; out
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 // ============================================================
-// Supabase接続設定(外部折衝ログ専用の別プロジェクト)
+// Supabase接続設定(折衝・議事録ログ専用の別プロジェクト)
 // ============================================================
 const SUPABASE_URL = 'https://szrmcsdkltpzxkhzrqwi.supabase.co';
 const SUPABASE_ANON_KEY = 'sb_publishable_XzvVJpehVc-TZjmE_Dog3g_nmtow-Wd';
@@ -145,10 +146,10 @@ function renderDetail() {
   }
   const fields = [
     ["連絡日時", formatTs(l.contact_at)],
-    ["連絡者", l.contact_person],
+    ["記録者", l.contact_person],
     ["連絡手段", l.contact_method],
-    ["名義・主体", l.contact_identity || "-"],
-    ["確認内容", l.content],
+    ["区分", l.contact_identity || "-"],
+    ["内容", l.content],
     ["次のアクション", l.next_action || "-"],
     ["ステータス", l.status],
     ["入力元", l.source === "template_post" ? "テンプレ投稿(A)" : "モーダル入力(B)"],
@@ -161,6 +162,12 @@ function renderDetail() {
         <div class="field-value">${value}</div>
       </div>
     `).join("")}
+    ${l.ai_comment ? `
+      <div class="field">
+        <div class="field-label">AIコメント</div>
+        <div class="field-value ai-comment">${l.ai_comment}</div>
+      </div>
+    ` : ""}
     ${l.slack_permalink ? `<a class="slack-link" href="${l.slack_permalink}" target="_blank" rel="noreferrer">元のSlack投稿を開く ↗</a>` : ""}
   `;
 }
