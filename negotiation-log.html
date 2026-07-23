@@ -1,3 +1,6 @@
+
+
+Negotiation log v2 · HTML
 <!DOCTYPE html>
 <html lang="ja">
 <head>
@@ -22,13 +25,18 @@ input:focus, select:focus, button:focus-visible { outline:2px solid #E8B94A; out
 .list { flex:1; max-height:calc(100vh - 130px); overflow-y:auto; }
 .item { display:block; width:100%; text-align:left; background:transparent; border:none; border-bottom:1px solid #232323; border-left:3px solid transparent; padding:14px 22px; cursor:pointer; color:#EDEDED; }
 .item.active { background:#242424; }
-.item-top { display:flex; justify-content:space-between; margin-bottom:4px; }
-.item-org { font-weight:600; font-size:15px; }
-.item-status { font-size:10px; font-family:'JetBrains Mono',monospace; }
+.item-top { display:flex; justify-content:space-between; align-items:center; margin-bottom:4px; gap:8px; }
+.item-org-wrap { display:flex; align-items:center; gap:8px; min-width:0; }
+.item-org { font-weight:600; font-size:15px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.type-tag { font-size:10px; font-family:'JetBrains Mono',monospace; padding:2px 8px; border-radius:20px; flex-shrink:0; }
+.type-tag.議事録 { background:#241f36; color:#a78bfa; }
+.type-tag.連絡 { background:#1c2436; color:#6c8ef2; }
+.item-status { font-size:10px; font-family:'JetBrains Mono',monospace; flex-shrink:0; }
 .item-content { font-size:13px; color:#BFBFBF; line-height:1.5; }
 .item-meta { font-family:'JetBrains Mono',monospace; font-size:10px; color:#6A6A6A; margin-top:6px; }
 .detail { width:380px; border-left:1px solid #2A2A2A; padding:22px; max-height:calc(100vh - 130px); overflow-y:auto; flex-shrink:0; }
-.detail-org { font-family:'Oswald',sans-serif; font-size:18px; font-weight:700; margin-bottom:12px; }
+.detail-org-wrap { display:flex; align-items:center; gap:8px; margin-bottom:12px; flex-wrap:wrap; }
+.detail-org { font-family:'Oswald',sans-serif; font-size:18px; font-weight:700; }
 .field { margin-bottom:12px; }
 .field-label { font-family:'JetBrains Mono',monospace; font-size:10px; color:#E8B94A; text-transform:uppercase; margin-bottom:3px; }
 .field-value { font-size:13px; line-height:1.6; color:#DADADA; }
@@ -41,16 +49,21 @@ input:focus, select:focus, button:focus-visible { outline:2px solid #E8B94A; out
 </style>
 </head>
 <body>
-
+ 
 <div class="header">
   <div class="font-display" style="font-size:22px; font-weight:700;">折衝・議事録ログ検索</div>
   <div class="font-mono" style="font-size:11px; color:#7A7A7A; margin-top:2px;">SLACKに投稿した内容は、ここから全部探せます</div>
 </div>
-
+ 
 <div class="error-banner" id="error-banner"></div>
-
+ 
 <div class="searchbar">
   <input type="text" id="keyword" placeholder="キーワードで検索(内容・次アクション・名義・相手・対象...)">
+  <select id="typeFilter">
+    <option>すべて</option>
+    <option>議事録</option>
+    <option>連絡</option>
+  </select>
   <select id="orgFilter"></select>
   <select id="statusFilter">
     <option>すべて</option>
@@ -63,12 +76,12 @@ input:focus, select:focus, button:focus-visible { outline:2px solid #E8B94A; out
   <label><input type="checkbox" id="onlyOpenAction"> 次アクションありのみ</label>
   <div class="count" id="count">読み込み中…</div>
 </div>
-
+ 
 <div class="layout">
   <div class="list" id="list"><div class="empty">読み込み中…</div></div>
   <div class="detail" id="detail"></div>
 </div>
-
+ 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 // ============================================================
@@ -76,35 +89,37 @@ input:focus, select:focus, button:focus-visible { outline:2px solid #E8B94A; out
 // ============================================================
 const SUPABASE_URL = 'https://szrmcsdkltpzxkhzrqwi.supabase.co';
 const SUPABASE_ANON_KEY = 'sb_publishable_XzvVJpehVc-TZjmE_Dog3g_nmtow-Wd';
-
+ 
 const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
+ 
 const STATUS_COLOR = {
   "未対応":"#6B6B6B", "仮押さえ中":"#E8B94A", "確定":"#5FA8D3", "要注意":"#D9614F", "完了":"#4A9A5A"
 };
-
+ 
 let LOGS = [];
 let selectedId = null;
-
+ 
 function formatTs(iso) {
   const d = new Date(iso);
   const pad = n => String(n).padStart(2,"0");
   return `${d.getFullYear()}.${pad(d.getMonth()+1)}.${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
-
+ 
 function initOrgFilter() {
   const sel = document.getElementById("orgFilter");
   const names = ["すべて", ...new Set(LOGS.map(l => l.org_name))];
   sel.innerHTML = names.map(n => `<option>${n}</option>`).join("");
 }
-
+ 
 function getFiltered() {
   const kw = document.getElementById("keyword").value.trim().toLowerCase();
+  const type = document.getElementById("typeFilter").value;
   const org = document.getElementById("orgFilter").value;
   const status = document.getElementById("statusFilter").value;
   const onlyOpen = document.getElementById("onlyOpenAction").checked;
-
-  return LOGS.filter(l => org === "すべて" || l.org_name === org)
+ 
+  return LOGS.filter(l => type === "すべて" || (l.log_type || "連絡") === type)
+    .filter(l => org === "すべて" || l.org_name === org)
     .filter(l => status === "すべて" || l.status === status)
     .filter(l => !onlyOpen || (l.next_action && l.next_action !== "特になし"))
     .filter(l => {
@@ -114,21 +129,24 @@ function getFiltered() {
     })
     .sort((a,b) => new Date(b.contact_at) - new Date(a.contact_at));
 }
-
+ 
 function renderList() {
   const filtered = getFiltered();
   document.getElementById("count").textContent = `${filtered.length}件ヒット / 全${LOGS.length}件`;
   const list = document.getElementById("list");
-
+ 
   if (filtered.length === 0) {
     list.innerHTML = `<div class="empty">条件に一致するログがありません。キーワードや絞り込みを変えてみてください。</div>`;
     return;
   }
-
+ 
   list.innerHTML = filtered.map(l => `
     <button class="item ${selectedId===l.id?'active':''}" style="border-left-color:${selectedId===l.id?STATUS_COLOR[l.status]:'transparent'}" onclick="selectItem('${l.id}')">
       <div class="item-top">
-        <span class="item-org">${l.org_name}</span>
+        <span class="item-org-wrap">
+          <span class="type-tag ${l.log_type || '連絡'}">${l.log_type || '連絡'}</span>
+          <span class="item-org">${l.org_name}</span>
+        </span>
         <span class="item-status" style="color:${STATUS_COLOR[l.status]}">${l.status}</span>
       </div>
       <div class="item-content">${l.content}</div>
@@ -136,7 +154,7 @@ function renderList() {
     </button>
   `).join("");
 }
-
+ 
 function renderDetail() {
   const detail = document.getElementById("detail");
   const l = LOGS.find(x => x.id === selectedId);
@@ -155,7 +173,10 @@ function renderDetail() {
     ["入力元", l.source === "template_post" ? "テンプレ投稿(A)" : "モーダル入力(B)"],
   ];
   detail.innerHTML = `
-    <div class="detail-org">${l.org_name}</div>
+    <div class="detail-org-wrap">
+      <span class="type-tag ${l.log_type || '連絡'}">${l.log_type || '連絡'}</span>
+      <span class="detail-org">${l.org_name}</span>
+    </div>
     ${fields.map(([label,value]) => `
       <div class="field">
         <div class="field-label">${label}</div>
@@ -171,17 +192,17 @@ function renderDetail() {
     ${l.slack_permalink ? `<a class="slack-link" href="${l.slack_permalink}" target="_blank" rel="noreferrer">元のSlack投稿を開く ↗</a>` : ""}
   `;
 }
-
+ 
 function selectItem(id) {
   selectedId = id;
   renderList();
   renderDetail();
 }
-
-["keyword","orgFilter","statusFilter","onlyOpenAction"].forEach(id => {
+ 
+["keyword","typeFilter","orgFilter","statusFilter","onlyOpenAction"].forEach(id => {
   document.getElementById(id).addEventListener("input", renderList);
 });
-
+ 
 // ------------------------------------------------------------
 // Supabaseからログを読み込む
 // ------------------------------------------------------------
@@ -190,7 +211,7 @@ async function loadLogs() {
     .from('negotiation_logs')
     .select('*')
     .order('contact_at', { ascending: false });
-
+ 
   if (error) {
     const banner = document.getElementById('error-banner');
     banner.style.display = 'block';
@@ -199,15 +220,16 @@ async function loadLogs() {
     document.getElementById('count').textContent = '';
     return;
   }
-
+ 
   LOGS = data || [];
   initOrgFilter();
   renderList();
   renderDetail();
 }
-
+ 
 loadLogs();
 </script>
-
+ 
 </body>
 </html>
+ 
