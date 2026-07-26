@@ -171,6 +171,12 @@
   .entry-searchbar select{max-width:200px; font-size:12px; padding:8px 10px; flex:0 0 auto;}
   .entry-filter-clear{background:var(--surface-2); border:1px solid var(--border); color:var(--text-muted); border-radius:8px; padding:8px 10px; cursor:pointer; font-size:12px; flex:0 0 auto;}
   .entry-count{font-size:11px; color:var(--text-muted); font-family:'JetBrains Mono', monospace; white-space:nowrap; flex:0 0 auto;}
+  .today-summary{background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:14px 16px; margin-bottom:16px;}
+  .today-summary-title{font-size:13px; font-weight:700; color:var(--accent); margin:0 0 10px; letter-spacing:0.05em;}
+  .today-summary-group{margin-bottom:10px;}
+  .today-summary-group:last-child{margin-bottom:0;}
+  .today-summary-group-name{font-size:12px; color:var(--text-muted); margin-bottom:4px;}
+  .today-summary-line{font-size:13px; line-height:1.6; padding:4px 0 4px 10px; border-left:2px solid var(--border); margin-bottom:2px;}
 </style>
 </head>
 <body>
@@ -740,6 +746,10 @@ dailyPanel.innerHTML = `
     <textarea id="entry-text" rows="3" placeholder="例）オープニング演出の脚本の第一稿を書き上げた"></textarea>
     <div style="display:flex; justify-content:flex-end;"><button class="send-btn" id="submit-entry">実績を投稿</button></div>
   </div>
+  <div class="today-summary">
+    <p class="today-summary-title">今日の進捗まとめ</p>
+    <div id="today-summary-body"></div>
+  </div>
   <div class="entry-searchbar">
     <input type="text" id="entry-keyword" placeholder="キーワードで検索(要約・投稿者・チャンネル)">
     <select id="entry-phase-filter"><option>すべて</option></select>
@@ -778,8 +788,32 @@ async function loadEntries() {
   document.getElementById("today-count").textContent = todayCount;
   if (!ENTRIES_CACHE.some(e => e.id === selectedEntryId)) selectedEntryId = null;
   initEntryPhaseFilter();
+  renderTodaySummary();
   renderEntryListPane();
   renderEntryDetail();
+}
+// 今日の投稿だけを、チャンネル(phase)ごとにまとめて一言要約を並べる
+function renderTodaySummary() {
+  const container = document.getElementById("today-summary-body");
+  const todayStr = new Date().toDateString();
+  const todayEntries = ENTRIES_CACHE.filter(e => new Date(e.created_at).toDateString() === todayStr);
+  if (todayEntries.length === 0) {
+    container.innerHTML = `<p class="ask-log-empty">今日はまだ投稿がありません。</p>`;
+    return;
+  }
+  const groups = {};
+  const order = [];
+  todayEntries.forEach(e => {
+    const name = e.phases?.name ?? "未分類";
+    if (!groups[name]) { groups[name] = []; order.push(name); }
+    groups[name].push(e);
+  });
+  container.innerHTML = order.map(name => `
+    <div class="today-summary-group">
+      <div class="today-summary-group-name">${name}</div>
+      ${groups[name].map(e => `<div class="today-summary-line">${entrySummaryText(e)}</div>`).join("")}
+    </div>
+  `).join("");
 }
 // チャンネル(phase)絞り込み用のプルダウンを、実際に投稿があるチャンネルだけで作る
 function initEntryPhaseFilter() {
