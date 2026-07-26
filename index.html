@@ -165,6 +165,12 @@
     .entry-list{border-right:none; border-bottom:1px solid var(--border); max-height:300px;}
     .entry-detail{width:100%; max-height:400px;}
   }
+  .entry-searchbar{display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin-bottom:10px;}
+  .entry-searchbar input[type="text"]{flex:1 1 200px;}
+  .entry-searchbar input[type="date"]{max-width:150px; font-size:12px; padding:8px 10px; flex:0 0 auto;}
+  .entry-searchbar select{max-width:200px; font-size:12px; padding:8px 10px; flex:0 0 auto;}
+  .entry-filter-clear{background:var(--surface-2); border:1px solid var(--border); color:var(--text-muted); border-radius:8px; padding:8px 10px; cursor:pointer; font-size:12px; flex:0 0 auto;}
+  .entry-count{font-size:11px; color:var(--text-muted); font-family:'JetBrains Mono', monospace; white-space:nowrap; flex:0 0 auto;}
 </style>
 </head>
 <body>
@@ -734,12 +740,28 @@ dailyPanel.innerHTML = `
     <textarea id="entry-text" rows="3" placeholder="例）オープニング演出の脚本の第一稿を書き上げた"></textarea>
     <div style="display:flex; justify-content:flex-end;"><button class="send-btn" id="submit-entry">実績を投稿</button></div>
   </div>
+  <div class="entry-searchbar">
+    <input type="text" id="entry-keyword" placeholder="キーワードで検索(要約・投稿者・チャンネル)">
+    <select id="entry-phase-filter"><option>すべて</option></select>
+    <input type="date" id="entry-date-filter" title="投稿日で絞り込み">
+    <button class="entry-filter-clear" id="entry-filter-clear" title="絞り込みを解除">✕ クリア</button>
+    <span class="entry-count" id="entry-count"></span>
+  </div>
   <div class="entry-layout">
     <div class="entry-list" id="entry-list"></div>
     <div class="entry-detail" id="entry-detail">
       <p style="font-size:13px; color:var(--text-muted);">左のリストから項目を選ぶと詳細が表示されます。</p>
     </div>
   </div>`;
+["entry-keyword","entry-phase-filter","entry-date-filter"].forEach(id => {
+  document.getElementById(id).addEventListener("input", renderEntryListPane);
+});
+document.getElementById("entry-filter-clear").addEventListener("click", () => {
+  document.getElementById("entry-keyword").value = "";
+  document.getElementById("entry-phase-filter").value = "すべて";
+  document.getElementById("entry-date-filter").value = "";
+  renderEntryListPane();
+});
 let ENTRIES_CACHE = [];
 let selectedEntryId = null;
 async function loadEntries() {
@@ -755,8 +777,35 @@ async function loadEntries() {
   const todayCount = ENTRIES_CACHE.filter(e => new Date(e.created_at).toDateString() === todayStr).length;
   document.getElementById("today-count").textContent = todayCount;
   if (!ENTRIES_CACHE.some(e => e.id === selectedEntryId)) selectedEntryId = null;
+  initEntryPhaseFilter();
   renderEntryListPane();
   renderEntryDetail();
+}
+// チャンネル(phase)絞り込み用のプルダウンを、実際に投稿があるチャンネルだけで作る
+function initEntryPhaseFilter() {
+  const sel = document.getElementById("entry-phase-filter");
+  const current = sel.value || "すべて";
+  const names = ["すべて", ...new Set(ENTRIES_CACHE.map(e => e.phases?.name ?? "未分類"))];
+  sel.innerHTML = names.map(n => `<option ${n === current ? "selected" : ""}>${n}</option>`).join("");
+}
+// キーワード・チャンネル・日付の3条件でENTRIES_CACHEを絞り込む
+function getFilteredEntries() {
+  const kw = document.getElementById("entry-keyword").value.trim().toLowerCase();
+  const phase = document.getElementById("entry-phase-filter").value;
+  const dateVal = document.getElementById("entry-date-filter").value; // "YYYY-MM-DD" 形式、未指定なら ""
+  return ENTRIES_CACHE
+    .filter(e => phase === "すべて" || (e.phases?.name ?? "未分類") === phase)
+    .filter(e => {
+      if (!dateVal) return true;
+      const d = new Date(e.created_at);
+      const local = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+      return local === dateVal;
+    })
+    .filter(e => {
+      if (!kw) return true;
+      const hay = [entrySummaryText(e), e.users?.name, e.phases?.name].join(" ").toLowerCase();
+      return hay.includes(kw);
+    });
 }
 function getMentionMap() {
   const map = {};
@@ -894,11 +943,18 @@ function entrySummaryText(entry) {
 }
 function renderEntryListPane() {
   const list = document.getElementById("entry-list");
+  const filtered = getFilteredEntries();
+  const countEl = document.getElementById("entry-count");
+  if (countEl) countEl.textContent = `${filtered.length}件 / 全${ENTRIES_CACHE.length}件`;
   if (ENTRIES_CACHE.length === 0) {
     list.innerHTML = `<p class="ask-log-empty">まだ投稿がありません。</p>`;
     return;
   }
-  list.innerHTML = ENTRIES_CACHE.map(entry => `
+  if (filtered.length === 0) {
+    list.innerHTML = `<p class="ask-log-empty">条件に一致する投稿がありません。</p>`;
+    return;
+  }
+  list.innerHTML = filtered.map(entry => `
     <button class="entry-item ${selectedEntryId === entry.id ? 'active' : ''}" onclick="selectEntry('${entry.id}')">
       <div class="entry-item-top">
         <span class="tag-pill" style="margin:0;">${entry.phases?.name ?? '未分類'}</span>
