@@ -149,16 +149,16 @@
   .note{font-size:12px; color:var(--text-muted); margin-top:24px; border-top:1px solid var(--border); padding-top:14px;}
   .whoami{font-size:12px; color:var(--text-muted); margin-bottom:16px;}
   .whoami button{background:none; border:none; color:var(--info); cursor:pointer; font-size:12px; text-decoration:underline; padding:0;}
+  .mention{color:#6c8ef2; background:rgba(108,142,242,0.15); padding:1px 5px; border-radius:4px; font-weight:500;}
+  .slack-msg{background:var(--surface-2); border-radius:8px; padding:8px 10px; margin-bottom:6px; font-size:13px; line-height:1.6;}
 </style>
 </head>
 <body>
 <div class="wrap">
-
   <p class="eyebrow">GASSHUKU CONTROL ROOM</p>
   <h1 class="display">合宿 準備ダッシュボード</h1>
   <div class="countdown-banner" id="countdown-banner"></div>
   <p class="whoami" id="global-error"></p>
-
   <!-- 画面1: 名前入力ゲート。名前が確定するまではこれだけを表示する -->
   <!-- 画面0: 共通パスワードゲート。正解するまではこれだけを表示する -->
   <div class="form-card name-gate-card" id="password-gate" style="display:none;">
@@ -171,7 +171,6 @@
     </div>
     <p id="password-error" style="font-size:12px; color:var(--danger); margin:8px 0 0;"></p>
   </div>
-
   <div class="form-card name-gate-card" id="name-gate" style="display:none;">
     <span class="step-badge">STEP 1</span>
     <p class="headline">👋 あなたの名前を選んでください</p>
@@ -183,12 +182,9 @@
     <p id="name-error" style="font-size:12px; color:var(--danger); margin:8px 0 0;"></p>
     <p style="font-size:11px; color:var(--text-muted); margin:8px 0 0;">一覧に名前が無い場合は、Slackワークスペースへの参加状況を運営に確認してください。</p>
   </div>
-
   <!-- 画面2: 名前確定後のダッシュボード本体 -->
   <div id="dashboard" style="display:none;">
-
     <p class="whoami" id="whoami"></p>
-
     <details class="usage-guide">
       <summary>使い方を見る</summary>
       <div class="usage-content">
@@ -198,18 +194,15 @@
         <p style="margin-top:4px; padding-top:8px; border-top:1px solid var(--border);">MVP(頑張った人)は現時点では自動集計ではなく、運営側が選んで登録する仕組みです。基準を自動化したい場合は運営に相談してください。</p>
       </div>
     </details>
-
     <div class="stat-row">
       <div class="stat-card"><p class="label">プログラム数</p><p class="value mono" id="phase-count">-</p></div>
       <div class="stat-card"><p class="label" title="全大項目のタスクのうち、完了したものの割合">全体進捗</p><p class="value mono" id="overall-pct">-</p></div>
       <div class="stat-card"><p class="label">本日の投稿</p><p class="value mono" id="today-count">-</p></div>
       <div class="stat-card" style="display:none;"><p class="label" title="「作業提案・Q&A」でステータスが「未対応」のままの件数。ステータスを変えると減ります">未対応の提案</p><p class="value mono" id="qa-pending-count">-</p></div>
     </div>
-
     <div class="mvp-pass" id="mvp-pass">
       <p style="font-size:13px; color:var(--text-muted);">MVP読み込み中…</p>
     </div>
-
     <div class="tabs">
       <button class="tab-btn active" data-tab="progress">進捗管理</button>
       <a href="negotiation-log.html" target="_blank" class="external-link-btn">折衝・議事録ログ↗</a>
@@ -218,7 +211,6 @@
       <button class="tab-btn" data-tab="qa" style="display:none;">作業提案・Q&A</button>
       <button class="tab-btn" data-tab="ask">中崎コンシェルジュ（Q&A）</button>
     </div>
-
     <div class="panel active" id="panel-progress">
       <div id="phase-groups"></div>
       <details class="usage-guide" style="margin-top:20px;">
@@ -242,11 +234,9 @@
     <div class="panel" id="panel-board"></div>
     <div class="panel" id="panel-qa"></div>
     <div class="panel" id="panel-ask"></div>
-
     <p class="note">このアプリはURLを知っていれば誰でも閲覧・投稿できます。表示名以外の個人情報（住所・電話番号など）は投稿しないでください。</p>
   </div>
 </div>
-
 <script>
 // ============================================================
 // 診断用：何かエラーが起きたら、必ず画面に表示する監視役
@@ -262,9 +252,7 @@ window.addEventListener('unhandledrejection', function(e){
   if (el) el.textContent = '⚠️ 非同期エラー: ' + (e.reason && e.reason.message ? e.reason.message : e.reason);
 });
 </script>
-
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
 <script>
 // ============================================================
 // Supabaseライブラリが本当に読み込めているかの確認
@@ -274,7 +262,6 @@ if (typeof window.supabase === 'undefined') {
   throw new Error('Supabase library failed to load from CDN');
 }
 </script>
-
 <script>
 // ============================================================
 // Supabase接続設定
@@ -283,10 +270,7 @@ if (typeof window.supabase === 'undefined') {
 // ============================================================
 const SUPABASE_URL = 'https://xtghwxdngpmznhtwahht.supabase.co';
 const SUPABASE_ANON_KEY = 'sb_publishable_3pq2WkWi5_nlDPG8vi8WUg_9iJ0_Duj';
-
 const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
-
 let currentUser = null; // { id, name, points, streak }
 let expandedPhases = new Set();
 let renamingPhases = new Set(); // 名前編集中の大項目idを一時保持
@@ -294,7 +278,6 @@ let collapsedTypes = new Set(); // 閉じているカテゴリ(type)名を保持
 let collapsedTypesInitialized = false; // 初回描画時に全カテゴリを畳むための一度きりのフラグ
 let slackMembersCache = []; // タスクの担当者選択用。ログインuserとは別に、Slackメンバー一覧をキャッシュ
 let slackChannelsCache = []; // 大項目↔Slackチャンネルの紐づけ選択用
-
 // ------------------------------------------------------------
 // ユーザー識別（認証なし・簡易版）
 // 一度名前を入力したらブラウザに保存し、次回から聞かない
@@ -311,7 +294,6 @@ async function ensurePassword() {
   if (localStorage.getItem('gasshuku_pw_ok') === 'true') return;
   await askForPassword();
 }
-
 function askForPassword() {
   return new Promise((resolve) => {
     document.getElementById('password-gate').style.display = 'block';
@@ -319,7 +301,6 @@ function askForPassword() {
     const input = document.getElementById('password-input');
     const btn = document.getElementById('password-submit');
     input.focus();
-
     async function submit() {
       const password = input.value;
       errorEl.textContent = '';
@@ -327,10 +308,8 @@ function askForPassword() {
         errorEl.textContent = '合言葉を入力してください';
         return;
       }
-
       btn.disabled = true;
       btn.textContent = '確認中…';
-
       try {
         const res = await fetch(`${SUPABASE_URL}/functions/v1/verify-password`, {
           method: "POST",
@@ -341,7 +320,6 @@ function askForPassword() {
           body: JSON.stringify({ password }),
         });
         const json = await res.json();
-
         if (json.ok) {
           localStorage.setItem('gasshuku_pw_ok', 'true');
           document.getElementById('password-gate').style.display = 'none';
@@ -359,14 +337,12 @@ function askForPassword() {
         btn.textContent = '入る';
       }
     }
-
     btn.addEventListener('click', submit);
     input.addEventListener('keydown', (e) => {
       if (e.key === 'Enter') submit();
     });
   });
 }
-
 async function ensureUser() {
   const savedId = localStorage.getItem('gasshuku_user_id');
   if (savedId) {
@@ -377,13 +353,11 @@ async function ensureUser() {
   }
   await askForName();
 }
-
 // 画面1(名前入力)→画面2(ダッシュボード)の切り替えだけを担当する関数
 function showDashboard() {
   document.getElementById('name-gate').style.display = 'none';
   document.getElementById('dashboard').style.display = 'block';
 }
-
 function askForName() {
   return new Promise((resolve) => {
     // 名前が未確定の間は、ダッシュボード側は非表示のまま。
@@ -392,12 +366,10 @@ function askForName() {
     const errorEl = document.getElementById('name-error');
     const select = document.getElementById('name-select');
     const btn = document.getElementById('name-submit');
-
     // Slackメンバー一覧をプルダウンに反映
     select.innerHTML = `<option value="">選択してください</option>` +
       slackMembersCache.map(m => `<option value="${m.slack_user_id}">${m.display_name}</option>`).join("");
     select.focus();
-
     async function submit() {
       const slackUserId = select.value;
       errorEl.textContent = '';
@@ -406,23 +378,19 @@ function askForName() {
         return;
       }
       const member = slackMembersCache.find(m => m.slack_user_id === slackUserId);
-
       btn.disabled = true;
       btn.textContent = '確認中…';
-
       // 同じSlackメンバーがすでにusersに登録されていないか確認する(find-or-create)
       const { data: existing } = await sb
         .from('users')
         .select('*')
         .eq('slack_user_id', slackUserId);
-
       if (existing && existing.length > 0) {
         currentUser = existing[0];
         localStorage.setItem('gasshuku_user_id', existing[0].id);
         resolve();
         return;
       }
-
       const { data, error } = await sb
         .from('users')
         .insert({ name: member.display_name, slack_user_id: slackUserId })
@@ -439,14 +407,12 @@ function askForName() {
       localStorage.setItem('gasshuku_user_id', data.id);
       resolve();
     }
-
     btn.addEventListener('click', submit);
     select.addEventListener('keydown', (e) => {
       if (e.key === 'Enter') submit();
     });
   });
 }
-
 function renderWhoAmI() {
   document.getElementById('whoami').innerHTML =
     `${currentUser.name} としてログイン中　<button id="switch-user">名前を変える</button>`;
@@ -455,18 +421,15 @@ function renderWhoAmI() {
     location.reload();
   });
 }
-
 // ------------------------------------------------------------
 // 進捗管理タブ
 // ------------------------------------------------------------
 let phasesCache = [];
-
 function statusInfo(pct){
   if(pct===100) return {label:"完了", cls:"done"};
   if(pct===0) return {label:"未着手", cls:"todo"};
   return {label:"進行中", cls:"doing"};
 }
-
 async function loadSlackMembers() {
   // タスクの担当者は、ログイン用のusersテーブルではなく、
   // Slackチャンネルのメンバー一覧(slack_membersテーブル)から取る。
@@ -475,14 +438,12 @@ async function loadSlackMembers() {
   if (error) { console.error(error); return; }
   slackMembersCache = data || [];
 }
-
 async function loadSlackChannels() {
   // 大項目に紐づけるSlackチャンネルの選択肢。sync-slack-channelsが同期している。
   const { data, error } = await sb.from('slack_channels').select('slack_channel_id, name').order('name', { ascending: true });
   if (error) { console.error(error); return; }
   slackChannelsCache = data || [];
 }
-
 async function loadPhases() {
   // .select('*, tasks(*)') は SQLのJOINに近いことをSupabaseにやらせている書き方。
   // 「phasesを取ってきて、それぞれにぶら下がるtasksも一緒に埋め込んで」という意味。
@@ -499,21 +460,17 @@ async function loadPhases() {
   populatePhaseSelects();
   populatePhaseTypeList();
 }
-
 function renderProgress(){
   const wrap = document.getElementById("phase-groups");
   wrap.innerHTML = "";
   let doneTotal = 0, taskTotal = 0;
-
   // typeごとにグループ化（データに出てくる順番をそのまま採用）
   const types = [];
   phasesCache.forEach(p => { if (!types.includes(p.type)) types.push(p.type); });
-
   if (!collapsedTypesInitialized) {
     types.forEach(type => collapsedTypes.add(type));
     collapsedTypesInitialized = true;
   }
-
   types.forEach(type => {
     const groupDetails = document.createElement("details");
     groupDetails.className = "type-group";
@@ -521,17 +478,14 @@ function renderProgress(){
     groupDetails.addEventListener("toggle", () => {
       if (groupDetails.open) collapsedTypes.delete(type); else collapsedTypes.add(type);
     });
-
     const groupSummary = document.createElement("summary");
     groupSummary.className = "type-group-summary";
     const countInType = phasesCache.filter(p => p.type === type).length;
     groupSummary.textContent = `${type} (${countInType})`;
     groupDetails.appendChild(groupSummary);
-
     const groupBody = document.createElement("div");
     groupDetails.appendChild(groupBody);
     wrap.appendChild(groupDetails);
-
     phasesCache.filter(p => p.type === type).forEach((p)=>{
       const tasks = p.tasks || [];
       const done = tasks.filter(t=>t.done).length;
@@ -572,19 +526,16 @@ function renderProgress(){
             ${slackChannelsCache.map(c => `<option value="${c.slack_channel_id}" ${p.slack_channel_id === c.slack_channel_id ? "selected" : ""}>#${c.name}</option>`).join("")}
           </select>
         </div>`;
-
       head.querySelector(".phase-rename-btn").addEventListener("click", (e)=>{
         e.stopPropagation();
         renamingPhases.add(p.id);
         renderProgress();
       });
-
       if (isRenaming) {
         const input = head.querySelector(".phase-name-input");
         input.addEventListener("click", (e)=>e.stopPropagation());
         input.focus();
         input.select();
-
         const save = async () => {
           const newName = input.value.trim();
           if (!newName) return;
@@ -603,7 +554,6 @@ function renderProgress(){
           if (e.key === "Escape") { renamingPhases.delete(p.id); renderProgress(); }
         });
       }
-
       head.querySelector(".phase-channel-select").addEventListener("click", (e)=>e.stopPropagation());
       head.querySelector(".phase-channel-select").addEventListener("change", async (e)=>{
         e.stopPropagation();
@@ -624,7 +574,6 @@ function renderProgress(){
         renderProgress();
       });
       card.appendChild(head);
-
       if(!isOpen && total === 0){
         const hint = document.createElement("p");
         hint.className = "task-hint";
@@ -632,7 +581,6 @@ function renderProgress(){
         hint.textContent = "▸ タップして開くと、ここにタスク(具体的なToDo)を追加できます";
         card.appendChild(hint);
       }
-
       if(isOpen){
         const list = document.createElement("div");
         list.className = "task-list";
@@ -669,7 +617,6 @@ function renderProgress(){
           item.addEventListener("click", (e)=>e.stopPropagation());
           list.appendChild(item);
         });
-
         // タスクをその場で追加する行(担当者はSlackメンバー一覧から選ぶ)
         const addRow = document.createElement("div");
         addRow.className = "task-add-row";
@@ -692,42 +639,35 @@ function renderProgress(){
           await addTaskToPhase(p.id, text, assigneeSelect.value || null);
         });
         list.appendChild(addRow);
-
         card.appendChild(list);
       }
       groupBody.appendChild(card);
     });
   });
-
   document.getElementById("overall-pct").textContent = taskTotal ? Math.round(doneTotal/taskTotal*100) + "%" : "0%";
   document.getElementById("phase-count").textContent = phasesCache.length;
 }
-
 function populatePhaseTypeList(){
   const dl = document.getElementById('phase-type-list');
   const types = [...new Set(phasesCache.map(p => p.type))];
   dl.innerHTML = types.map(t => `<option value="${t}"></option>`).join('');
 }
-
 function populatePhaseSelects(){
   const options = phasesCache.map(p=>`<option value="${p.id}">${p.name}</option>`).join("");
   const entrySelect = document.getElementById('phase-select');
   if (entrySelect) entrySelect.innerHTML = options;
 }
-
 function populatePhaseChannelSelect(){
   const sel = document.getElementById('new-phase-channel');
   if (!sel) return;
   const options = slackChannelsCache.map(c => `<option value="${c.slack_channel_id}">#${c.name}</option>`).join("");
   sel.innerHTML = `<option value="">Slackチャンネル(通知先・任意)</option>` + options;
 }
-
 async function addTaskToPhase(phaseId, text, assigneeSlackId){
   await sb.from('tasks').insert({ phase_id: phaseId, title: text, assignee_slack_id: assigneeSlackId || null });
   expandedPhases.add(phaseId);
   await loadPhases();
 }
-
 // ------------------------------------------------------------
 // 大項目（PHASES）を、画面のボタンから追加する
 // ------------------------------------------------------------
@@ -738,11 +678,9 @@ document.getElementById('add-phase-btn').addEventListener('click', async () => {
   const errorEl = document.getElementById('add-phase-error');
   const btn = document.getElementById('add-phase-btn');
   errorEl.textContent = '';
-
   const name = nameInput.value.trim();
   const type = typeInput.value.trim();
   const slackChannelId = channelSelect.value || null;
-
   if (!name) {
     errorEl.textContent = '項目名を入力してください';
     return;
@@ -751,15 +689,12 @@ document.getElementById('add-phase-btn').addEventListener('click', async () => {
     errorEl.textContent = '種別を入力してください（例：準備・運営）';
     return;
   }
-
   btn.disabled = true;
   btn.textContent = '追加中…';
-
   // 既存の一番大きいorder_indexの次の番号を、新しい項目の並び順にする
   const nextIndex = phasesCache.length
     ? Math.max(...phasesCache.map(p => p.order_index)) + 1
     : 1;
-
   const { error } = await sb.from('phases').insert({ name, type, order_index: nextIndex, slack_channel_id: slackChannelId });
   if (error) {
     errorEl.textContent = '追加に失敗しました: ' + error.message;
@@ -768,7 +703,6 @@ document.getElementById('add-phase-btn').addEventListener('click', async () => {
     btn.textContent = '追加';
     return;
   }
-
   nameInput.value = '';
   typeInput.value = '';
   channelSelect.value = '';
@@ -776,7 +710,6 @@ document.getElementById('add-phase-btn').addEventListener('click', async () => {
   btn.textContent = '追加';
   await loadPhases();
 });
-
 // ------------------------------------------------------------
 // 今日の進捗タブ
 // ------------------------------------------------------------
@@ -792,7 +725,6 @@ dailyPanel.innerHTML = `
     <summary>過去のログを見る(<span id="feed-archive-count">0</span>件)</summary>
     <div id="feed-archive-body" style="margin-top:12px; display:flex; flex-direction:column; gap:12px;"></div>
   </details>`;
-
 async function loadEntries() {
   // entry_cheers(user_id) を埋め込むと、そのentryに誰がcheerしたかの一覧が配列で付いてくる
   const { data, error } = await sb
@@ -801,7 +733,6 @@ async function loadEntries() {
     .order('created_at', { ascending: false })
     .limit(50);
   if (error) { console.error(error); return; }
-
   const todayStr = new Date().toDateString();
   const todayEntries = [];
   const pastEntries = [];
@@ -809,13 +740,11 @@ async function loadEntries() {
     if (new Date(entry.created_at).toDateString() === todayStr) todayEntries.push(entry);
     else pastEntries.push(entry);
   });
-
   renderEntryList(document.getElementById("feed"), todayEntries, "今日はまだ投稿がありません。");
   renderEntryList(document.getElementById("feed-archive-body"), pastEntries, "過去のログはありません。");
   document.getElementById("feed-archive-count").textContent = pastEntries.length;
   document.getElementById("today-count").textContent = todayEntries.length;
 }
-
 function renderEntryList(container, entries, emptyMessage) {
   container.innerHTML = "";
   if (entries.length === 0) {
@@ -824,14 +753,43 @@ function renderEntryList(container, entries, emptyMessage) {
   }
   entries.forEach(entry => container.appendChild(buildEntryCard(entry)));
 }
-
+function getMentionMap() {
+  const map = {};
+  slackMembersCache.forEach(m => map[m.slack_user_id] = m.display_name);
+  return map;
+}
+function convertMentions(text) {
+  const map = getMentionMap();
+  return text.replace(/<@([A-Z0-9]+)>/g, (m, id) =>
+    `<span class="mention">@${map[id] || id}</span>`);
+}
+const emojiMap = {
+  "+1": "👍",
+  "pray": "🙏",
+  "tada": "🎉",
+  "mag": "🔍",
+  // 実際にSlackで使われてるものを見ながら追加していってください
+};
+function convertEmoji(text) {
+  return text.replace(/:([a-z0-9_+-]+):/g, (m, name) => emojiMap[name] || m);
+}
+function isSlackAggregatedEntry(text) {
+  return text.startsWith('【Slackより自動集約');
+}
+function renderEntryTimeline(text) {
+  if (!isSlackAggregatedEntry(text)) {
+    return `<p style="font-size:14px; margin:6px 0 8px;">${convertEmoji(convertMentions(text))}</p>`;
+  }
+  const messages = text.split(/\n?- /).map(s => s.trim()).filter(Boolean);
+  return messages.map(msg =>
+    `<div class="slack-msg">${convertEmoji(convertMentions(msg))}</div>`
+  ).join('');
+}
 function buildEntryCard(entry) {
   const cheerCount = (entry.entry_cheers || []).length;
   const iCheered = currentUser && (entry.entry_cheers || []).some(c => c.user_id === currentUser.id);
-
   const el = document.createElement("div");
   el.className = "card";
-
   let aiHtml = '';
   if (entry.ai_status === 'done' && entry.ai_comment) {
     aiHtml = `<div class="ai-comment">🤖 ${entry.ai_comment}</div><br>`;
@@ -840,20 +798,18 @@ function buildEntryCard(entry) {
   } else if (entry.ai_status === 'error') {
     aiHtml = `<div class="ai-comment pending">🤖 AI評価に失敗しました</div><br>`;
   }
-
   el.innerHTML = `
     <div style="display:flex; justify-content:space-between; align-items:center;">
       <span class="feed-name">${entry.users?.name ?? '(不明)'}</span>
       <span class="feed-time">${new Date(entry.created_at).toLocaleString('ja-JP')}</span>
     </div>
     <span class="tag-pill">${entry.phases?.name ?? '未分類'}</span>
-    <p style="font-size:14px; margin:6px 0 8px;">${entry.text}</p>
+    ${renderEntryTimeline(entry.text)}
     ${aiHtml}
     <div style="display:flex; justify-content:space-between; align-items:center;">
       <button class="cheer-btn ${iCheered ? 'active' : ''}"><span class="heart">♥</span> <span class="cheer-count">${cheerCount}</span></button>
       <button class="delete-btn entry-delete-btn" title="この投稿を削除">🗑</button>
     </div>`;
-
   el.querySelector(".cheer-btn").addEventListener("click", async () => {
     if (!currentUser) return;
     if (iCheered) {
@@ -863,17 +819,14 @@ function buildEntryCard(entry) {
     }
     await loadEntries();
   });
-
   el.querySelector(".entry-delete-btn").addEventListener("click", async () => {
     const ok = confirm("この投稿を削除しますか？");
     if (!ok) return;
     await sb.from('entries').delete().eq('id', entry.id);
     await loadEntries();
   });
-
   return el;
 }
-
 document.getElementById("submit-entry").addEventListener("click", async ()=>{
   const text = document.getElementById("entry-text").value.trim();
   const phaseId = document.getElementById("phase-select").value;
@@ -887,7 +840,6 @@ document.getElementById("submit-entry").addEventListener("click", async ()=>{
   btn.textContent = "実績を投稿";
   await loadEntries();
 });
-
 // ------------------------------------------------------------
 // 称賛ボードタブ
 // ------------------------------------------------------------
@@ -898,7 +850,6 @@ async function loadBoard() {
     .order('points', { ascending: false })
     .limit(20);
   if (error) { console.error(error); return; }
-
   const boardPanel = document.getElementById("panel-board");
   boardPanel.innerHTML = "";
   data.forEach((m, i)=>{
@@ -913,7 +864,6 @@ async function loadBoard() {
     boardPanel.appendChild(row);
   });
 }
-
 // ------------------------------------------------------------
 // MVPパス
 // ------------------------------------------------------------
@@ -924,7 +874,6 @@ async function loadMvp() {
     .order('award_date', { ascending: false })
     .limit(1)
     .maybeSingle();
-
   const wrap = document.getElementById('mvp-pass');
   if (error || !data) {
     wrap.innerHTML = `<p style="font-size:13px; color:var(--text-muted);">まだMVPが選出されていません。</p>`;
@@ -946,7 +895,6 @@ async function loadMvp() {
     await loadMvp();
   });
 }
-
 // ------------------------------------------------------------
 // 作業提案・Q&Aタブ
 // ------------------------------------------------------------
@@ -965,23 +913,18 @@ qaPanel.innerHTML = `
     <div style="display:flex; justify-content:flex-end;"><button class="send-btn" id="qa-send">相談する</button></div>
   </div>
   <div id="qa-list"></div>`;
-
 const catCls = {"追加希望":"add", "抜け漏れ指摘":"missing", "オプション提案":"option"};
-
 async function loadQa() {
   const { data, error } = await sb
     .from('qa_items')
     .select('*, users(name)')
     .order('created_at', { ascending: false });
   if (error) { console.error(error); return; }
-
   const qaList = document.getElementById("qa-list");
   qaList.innerHTML = "";
   let pending = 0;
-
   data.forEach(entry => {
     if (entry.status === '未対応') pending++;
-
     const el = document.createElement("div");
     el.className = "card";
     el.innerHTML = `
@@ -997,7 +940,6 @@ async function loadQa() {
       <p style="font-size:12px; color:var(--text-muted); margin:8px 0 2px;">${entry.users?.name ?? '(不明)'} より</p>
       <p style="font-size:14px; margin:0 0 8px;">${entry.question}</p>
       <div class="taskify-slot"></div>`;
-
     const slot = el.querySelector(".taskify-slot");
     if (entry.status === "採用") {
       if (entry.converted_task_id) {
@@ -1018,18 +960,14 @@ async function loadQa() {
         });
       }
     }
-
     el.querySelector(".qa-status").addEventListener("change", async (e) => {
       await sb.from('qa_items').update({ status: e.target.value }).eq('id', entry.id);
       await loadQa();
     });
-
     qaList.appendChild(el);
   });
-
   document.getElementById("qa-pending-count").textContent = pending;
 }
-
 document.getElementById("qa-send").addEventListener("click", async ()=>{
   const question = document.getElementById("qa-input").value.trim();
   const category = document.getElementById("qa-category").value;
@@ -1043,7 +981,6 @@ document.getElementById("qa-send").addEventListener("click", async ()=>{
   btn.textContent = "相談する";
   await loadQa();
 });
-
 // ------------------------------------------------------------
 // 中崎コンシェルジュ タブ(AIに実績ログについて質問できる)
 // これまでの実績ログ(entries)を根拠に、Edge Function経由で
@@ -1060,12 +997,10 @@ askPanel.innerHTML = `
     <div style="display:flex; justify-content:flex-end;"><button class="send-btn" id="ask-send">質問する</button></div>
   </div>
   <div id="ask-log"><p class="ask-log-empty">まだ質問がありません。気になることを聞いてみましょう。</p></div>`;
-
 function appendAskPair(question) {
   const logEl = document.getElementById("ask-log");
   const emptyMsg = logEl.querySelector(".ask-log-empty");
   if (emptyMsg) emptyMsg.remove();
-
   const card = document.createElement("div");
   card.className = "card";
   card.innerHTML = `
@@ -1075,11 +1010,9 @@ function appendAskPair(question) {
   logEl.prepend(card);
   return card;
 }
-
 async function askQuestion(question) {
   const card = appendAskPair(question);
   const answerEl = card.querySelector(".ask-answer");
-
   try {
     const res = await fetch(`${SUPABASE_URL}/functions/v1/ask-entries`, {
       method: "POST",
@@ -1091,10 +1024,8 @@ async function askQuestion(question) {
     });
     const json = await res.json();
     if (!res.ok) throw new Error(json.error || "回答の取得に失敗しました");
-
     answerEl.classList.remove("ai-comment", "pending");
     answerEl.textContent = "🤖 " + json.answer;
-
     if (json.sources && json.sources.length) {
       const srcWrap = document.createElement("div");
       srcWrap.className = "ask-sources";
@@ -1108,38 +1039,32 @@ async function askQuestion(question) {
     answerEl.textContent = "⚠️ " + e.message;
   }
 }
-
 document.getElementById("ask-send").addEventListener("click", async () => {
   const input = document.getElementById("ask-input");
   const question = input.value.trim();
   if (!question) return;
   const btn = document.getElementById("ask-send");
-
   input.value = "";
   btn.disabled = true;
   await askQuestion(question);
   btn.disabled = false;
 });
-
 // ------------------------------------------------------------
 // タブ切り替え
 // ------------------------------------------------------------
 const conciergeSound = new Audio("concierge-sound.mp3");
-
 document.querySelectorAll(".tab-btn").forEach(b=>{
   b.addEventListener("click", ()=>{
     document.querySelectorAll(".tab-btn").forEach(x=>x.classList.remove("active"));
     document.querySelectorAll(".panel").forEach(x=>x.classList.remove("active"));
     b.classList.add("active");
     document.getElementById("panel-" + b.dataset.tab).classList.add("active");
-
     if (b.dataset.tab === "ask") {
       conciergeSound.currentTime = 0;
       conciergeSound.play().catch(()=>{}); // 自動再生がブロックされても静かに無視する
     }
   });
 });
-
 // ------------------------------------------------------------
 // 本番までのカウントダウン
 // 名前入力の前後に関わらず、常に表示する
@@ -1149,7 +1074,6 @@ function renderCountdown(){
   const eventStart = new Date('2026-08-27T00:00:00+09:00');
   const eventEnd = new Date('2026-08-29T00:00:00+09:00'); // 8/28終日まで
   const now = new Date();
-
   if (now < eventStart) {
     const diffMs = eventStart - now;
     const days = Math.floor(diffMs / 86400000);
@@ -1166,7 +1090,6 @@ function renderCountdown(){
     el.innerHTML = `<span class="num mono">お疲れ様でした</span><span class="label">RV合宿は終了しました</span>`;
   }
 }
-
 // ------------------------------------------------------------
 // 初期化
 // ------------------------------------------------------------
@@ -1192,7 +1115,6 @@ function renderCountdown(){
     document.getElementById('global-error').textContent = 'エラーが発生しました: ' + e.message;
   }
 })();
-
 // ------------------------------------------------------------
 // Slack通知の「▶ タスクを見る」リンクから開いたとき、
 // 該当タスクが属する大項目を自動で展開し、そこまでスクロール+ハイライトする
@@ -1200,10 +1122,8 @@ function renderCountdown(){
 function jumpToTaskFromUrl(){
   const taskId = new URLSearchParams(location.search).get('task');
   if (!taskId) return;
-
   const phase = phasesCache.find(p => (p.tasks || []).some(t => String(t.id) === taskId));
   if (!phase) return;
-
   // 進捗管理タブに切り替え、対象の大項目を展開してから再描画
   document.querySelectorAll(".tab-btn").forEach(x=>x.classList.remove("active"));
   document.querySelectorAll(".panel").forEach(x=>x.classList.remove("active"));
@@ -1212,7 +1132,6 @@ function jumpToTaskFromUrl(){
   expandedPhases.add(phase.id);
   collapsedTypes.delete(phase.type);
   renderProgress();
-
   // 再描画後のDOMに対してスクロール+ハイライト
   setTimeout(() => {
     const el = document.querySelector(`.task-item[data-task-id="${taskId}"]`);
