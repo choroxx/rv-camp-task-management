@@ -1,24 +1,62 @@
-# 合宿準備ダッシュボード（モックアップ）
+# 合宿コントロールルーム
 
-見た目確認用のプロトタイプです。`index.html` を開くだけで動きます（外部サーバー不要）。
+合宿イベントの準備タスクと進捗を管理するダッシュボードです。GitHub Pagesで公開し、Supabaseをバックエンドとして利用しています。
 
-## GitHubで公開・共同編集する手順
+## 概要
 
-1. GitHubで新しいリポジトリを作成する（例: `gasshuku-prep-mockup`）
-2. このフォルダの中身（`index.html`）をそのままリポジトリに追加してコミット・プッシュする
+タスクの登録・進捗管理に加えて、Slack上でのやり取り（日報・連絡・議事録）を自動でタスク化し、AIによる評価コメントを付与する仕組みまで含んだ本番運用アプリです。
+
+## 主な機能
+
+- タスク管理・進捗ダッシュボード（フェーズ別の進捗表示）
+- Slack連携（RV日報Bot）：日報スレッドの返信まで含めて進捗を自動同期
+- `/renraku` スラッシュコマンドによる折衝・議事録ログの記録（種別ごとに色分け表示）
+- Slackメッセージから抽出したアクションアイテムを担当者付きで自動タスク化（重複チェックあり）
+- AIによる進捗コメント（特定の著名人風キャラクターの評価コメントをClaude Haikuで生成）
+- 使い方マニュアル（`外部折衝ログ_使い方マニュアル.html`、スクリーンショット埋め込み）
+
+## 技術構成
+
+| 区分 | 内容 |
+|---|---|
+| フロントエンド | HTML / CSS / JS、GitHub Pagesで公開 |
+| バックエンド | Supabase（東京リージョン）：メインプロジェクト（タスク・フェーズ・エントリ・ユーザー・Slackメンバー）＋外部ログ用プロジェクト（折衝・議事録ログ） |
+| Edge Functions | Deno（`evaluate-entry`、`sync-slack-progress` など） |
+| スケジューリング | pg_cron / pg_net |
+| 外部連携 | Slack API（RV日報Bot）、Anthropic API（Claude Haiku） |
+
+## セットアップ
+
+1. 本リポジトリをclone
    ```
-   git init
-   git add index.html README.md
-   git commit -m "初期モックアップ"
-   git remote add origin https://github.com/【あなたのアカウント】/gasshuku-prep-mockup.git
-   git push -u origin main
+   git clone https://github.com/choroxx/rv-camp-task-management.git
    ```
-3. GitHub上でリポジトリの `Settings > Pages` を開き、`Deploy from a branch` → `main` を選択して保存する
-   → 数分後に `https://【あなたのアカウント】.github.io/gasshuku-prep-mockup/` でブラウザから誰でも見られるURLが発行される（これは「見るだけ」用の共有リンク）
-4. 編集してほしいメンバーを `Settings > Collaborators` から招待する
-   - Gitに慣れている人 → 通常どおり clone してブランチを切って Pull Request
-   - Gitに慣れていない人 → GitHub上でリポジトリを開いた状態でキーボードの `.`（ピリオド）を押すと、ブラウザだけで動くコードエディタ（github.dev）が開き、ローカルにcloneせずに直接編集・コミットできる
+2. Supabaseプロジェクトを2つ用意（メイン／外部ログ用）し、テーブルとEdge Functionsをデプロイ
+3. 各Edge Functionsに必要な環境変数を設定
+   - Supabase URL / anon key（メイン・外部ログ両方）
+   - Slack Bot Token（`rv-nippou-bot`）
+   - Anthropic APIキー
+   - スケジュール系Functionはトリガーからの呼び出しのためJWT検証を無効化
+4. Slack側で `/renraku` スラッシュコマンドとイベントAPIのWebhook送信先をこのリポジトリのEdge Functions URLに設定
 
-## コードを触らずに動きだけ確認したい人向け
+## 公開・共同編集
 
-`index.html` をダブルクリックすればブラウザで開けます。ローカルで開いている間だけ動作し、リロードすると入力内容は消えます（これは仕様で、実データを貯めるにはバックエンドが別途必要です）。
+1. GitHubで対象リポジトリを開き、`Settings > Pages` で `Deploy from a branch` → `main` を選択
+   → 数分後に `https://choroxx.github.io/rv-camp-task-management/` で閲覧可能
+2. 編集メンバーは `Settings > Collaborators` から招待
+   - Gitに慣れている人：通常どおりclone → ブランチ → Pull Request
+   - Gitに慣れていない人：リポジトリを開いた状態で `.`（ピリオド）を押すとgithub.devが開き、ブラウザだけで編集・コミット可能
+
+## 既知の制約
+
+- スキーマ変更後はPostgRESTのキャッシュが古いままになることがあるため、`NOTIFY pgrst, 'reload schema'` を実行する
+- SupabaseダッシュボードのWebhook UIには既知の不具合があるため、`pg_net` を使ったデータベーストリガー経由の呼び出しを利用している
+- Slack同期は「直近N日」ではなく `latest_reply` のタイムスタンプで全履歴をフィルタする方式（古いスレッドへの新規返信を取りこぼさないため）
+
+
+## 関係者
+
+| 役割 | 担当 |
+|---|---|
+| 承認・合宿リーダー | （非公開） |
+| 主催者 | （非公開） |
