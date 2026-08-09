@@ -121,7 +121,7 @@
   .task-hint{font-size:12px; color:var(--text-muted); margin:6px 0 0; font-style:italic;}
   .assignee-tag{font-size:11px; color:var(--accent); background:var(--surface-2); padding:2px 8px; border-radius:100px; white-space:nowrap;}
   .task-assignee-select{font-size:11px; padding:3px 6px; max-width:110px;}
-  .task-due-input{font-size:11px; padding:3px 6px; max-width:120px; color-scheme:dark; background:var(--surface-2); border:1px solid var(--border); color:var(--text); border-radius:8px; font-family:inherit;}
+  .task-due-input{font-size:11px; padding:3px 6px; width:128px; min-width:0; flex:0 0 auto; color-scheme:dark; background:var(--surface-2); border:1px solid var(--border); color:var(--text); border-radius:8px; font-family:inherit;}
   .task-item.overdue .task-item-main span{color:var(--danger);}
   .task-due-input.overdue{border-color:var(--danger); color:var(--danger);}
   .countdown-banner{background:linear-gradient(135deg, var(--surface) 0%, var(--surface-2) 100%); border:1px solid var(--accent); border-radius:14px; padding:16px 20px; margin-bottom:20px; display:flex; align-items:baseline; justify-content:center; gap:10px; text-align:center; flex-wrap:wrap;}
@@ -171,11 +171,9 @@
        日本語が1文字ずつ縦に折り返される崩れ方をするため、折り返し前提のレイアウトにする */
     .task-item{flex-wrap:wrap; row-gap:6px;}
     .task-item .task-item-main{flex:1 1 100%; width:100%;}
-    .task-due-input{flex:0 1 auto;}
     .task-assignee-select{flex:1 1 auto; max-width:none;}
     .task-add-row{flex-wrap:wrap;}
     .task-add-row .new-task-input{flex:1 1 100%;}
-    .task-add-row .task-due-input,
     .task-add-row .task-assignee-select,
     .task-add-row .task-add-btn{flex:1 1 auto;}
     /* 大項目カードの見出し行も同様に、名前が圧迫されないよう折り返す */
