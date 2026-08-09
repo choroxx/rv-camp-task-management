@@ -121,9 +121,13 @@
   .task-hint{font-size:12px; color:var(--text-muted); margin:6px 0 0; font-style:italic;}
   .assignee-tag{font-size:11px; color:var(--accent); background:var(--surface-2); padding:2px 8px; border-radius:100px; white-space:nowrap;}
   .task-assignee-select{font-size:11px; padding:3px 6px; max-width:110px;}
-  .task-due-input{font-size:11px; padding:3px 6px; width:128px; min-width:0; flex:0 0 auto; color-scheme:dark; background:var(--surface-2); border:1px solid var(--border); color:var(--text); border-radius:8px; font-family:inherit;}
+  /* 期限欄: 空だと何の欄か分からないので📅アイコン付きの箱で囲み、常に見えるようにする */
+  .task-due-wrap{display:inline-flex; align-items:center; gap:3px; flex:0 0 auto; background:var(--surface-2); border:1px solid var(--border); border-radius:8px; padding:2px 6px;}
+  .task-due-wrap.overdue{border-color:var(--danger);}
+  .task-due-icon{font-size:11px; flex-shrink:0;}
+  .task-due-input{font-size:11px; padding:1px 0; width:92px; min-width:0; border:none; background:transparent; color:var(--text); font-family:inherit; color-scheme:dark;}
   .task-item.overdue .task-item-main span{color:var(--danger);}
-  .task-due-input.overdue{border-color:var(--danger); color:var(--danger);}
+  .task-due-input.overdue{color:var(--danger);}
   .countdown-banner{background:linear-gradient(135deg, var(--surface) 0%, var(--surface-2) 100%); border:1px solid var(--accent); border-radius:14px; padding:16px 20px; margin-bottom:20px; display:flex; align-items:baseline; justify-content:center; gap:10px; text-align:center; flex-wrap:wrap;}
   .countdown-banner .num{font-family:'Bebas Neue', sans-serif; font-size:44px; color:var(--accent); line-height:1;}
   .countdown-banner .time{font-family:'JetBrains Mono', monospace; font-size:26px; color:var(--accent); line-height:1;}
@@ -630,7 +634,10 @@ function buildTaskItemElement(t){
       <input type="checkbox" ${t.done ? "checked" : ""} /><span>${t.title}</span>
     </label>
     ${phaseTagHtml}
-    <input type="date" class="task-due-input${isOverdue ? " overdue" : ""}" value="${t.due_date || ""}" title="期限(任意)" />
+    <span class="task-due-wrap${isOverdue ? " overdue" : ""}" title="期限(任意)">
+      <span class="task-due-icon">📅</span>
+      <input type="date" class="task-due-input${isOverdue ? " overdue" : ""}" value="${t.due_date || ""}" />
+    </span>
     <select class="task-assignee-select">${memberOptions}</select>
     ${archiveBtnHtml}
     <button class="delete-btn task-delete-btn" title="このタスクを削除">🗑</button>`;
@@ -847,7 +854,10 @@ function renderProgress(){
           slackMembersCache.map(m => `<option value="${m.slack_user_id}">${m.display_name}</option>`).join("");
         addRow.innerHTML = `
           <input type="text" class="new-task-input" placeholder="新しいタスクを追加" />
-          <input type="date" class="task-due-input new-task-due" title="期限(任意)" />
+          <span class="task-due-wrap" title="期限(任意)">
+            <span class="task-due-icon">📅</span>
+            <input type="date" class="task-due-input new-task-due" />
+          </span>
           <select class="task-assignee-select new-task-assignee">${newTaskMemberOptions}</select>
           <button class="task-add-btn">追加</button>`;
         addRow.addEventListener("click", (e)=>e.stopPropagation());
