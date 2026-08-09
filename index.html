@@ -560,29 +560,29 @@ function renderMyTasks(){
     list.appendChild(empty);
     return;
   }
-  // 未完了はそのまま並べ、完了したものは「完了タスクを見る」の中にアーカイブする
-  const activeTasks = myTasks.filter(t => !t.done);
-  const doneTasks = myTasks.filter(t => t.done);
-  if (activeTasks.length === 0) {
+  // アーカイブされていないものはそのまま並べ、アーカイブ済みは「アーカイブ済みを表示」の中にまとめる
+  const visibleTasks = myTasks.filter(t => !t.archived);
+  const archivedTasks = myTasks.filter(t => t.archived);
+  if (visibleTasks.length === 0) {
     const empty = document.createElement("p");
     empty.className = "ask-log-empty";
-    empty.textContent = "未完了のタスクはありません。";
+    empty.textContent = "表示できるタスクはありません。";
     list.appendChild(empty);
   } else {
-    activeTasks.forEach(t => list.appendChild(buildTaskItemElement(t)));
+    visibleTasks.forEach(t => list.appendChild(buildTaskItemElement(t)));
   }
-  if (doneTasks.length > 0) {
+  if (archivedTasks.length > 0) {
     const archiveDetails = document.createElement("details");
     archiveDetails.className = "usage-guide";
     archiveDetails.style.marginTop = "4px";
     archiveDetails.addEventListener("click", (e)=>e.stopPropagation());
     const archiveSummary = document.createElement("summary");
-    archiveSummary.textContent = `完了タスクを見る(${doneTasks.length}件)`;
+    archiveSummary.textContent = `アーカイブ済みを表示(${archivedTasks.length}件)`;
     archiveDetails.appendChild(archiveSummary);
     const archiveBody = document.createElement("div");
     archiveBody.className = "usage-content";
     archiveBody.style.marginTop = "8px";
-    doneTasks.forEach(t => archiveBody.appendChild(buildTaskItemElement(t)));
+    archivedTasks.forEach(t => archiveBody.appendChild(buildArchivedTaskItemElement(t)));
     archiveDetails.appendChild(archiveBody);
     list.appendChild(archiveDetails);
   }
@@ -601,22 +601,62 @@ function buildTaskItemElement(t){
     slackMembersCache.map(m => `<option value="${m.slack_user_id}" ${t.assignee_slack_id === m.slack_user_id ? "selected" : ""}>${m.display_name}</option>`).join("");
   // phaseNameが渡された時だけ(=横断表示の時だけ)、どのセクションのタスクか分かるタグを出す
   const phaseTagHtml = t.phaseName ? `<span class="assignee-tag" style="margin-right:6px;">${t.phaseName}</span>` : "";
+  // アーカイブボタンは、完了済みタスクにだけ出す
+  const archiveBtnHtml = t.done ? `<button class="delete-btn task-archive-btn" title="このタスクをアーカイブ">📦</button>` : "";
   item.innerHTML = `
     <label class="task-item-main">
       <input type="checkbox" ${t.done ? "checked" : ""} /><span>${t.title}</span>
     </label>
     ${phaseTagHtml}
     <select class="task-assignee-select">${memberOptions}</select>
+    ${archiveBtnHtml}
     <button class="delete-btn task-delete-btn" title="このタスクを削除">🗑</button>`;
   item.querySelector("input").addEventListener("change", async (e)=>{
     e.stopPropagation();
     await sb.from('tasks').update({ done: e.target.checked }).eq('id', t.id);
     await loadPhases();
   });
+  const archiveBtn = item.querySelector(".task-archive-btn");
+  if (archiveBtn) {
+    archiveBtn.addEventListener("click", async (e)=>{
+      e.stopPropagation();
+      await sb.from('tasks').update({ archived: true }).eq('id', t.id);
+      await loadPhases();
+    });
+  }
   item.querySelector(".task-assignee-select").addEventListener("click", (e)=>e.stopPropagation());
   item.querySelector(".task-assignee-select").addEventListener("change", async (e)=>{
     e.stopPropagation();
     await sb.from('tasks').update({ assignee_slack_id: e.target.value || null }).eq('id', t.id);
+    await loadPhases();
+  });
+  item.querySelector(".task-delete-btn").addEventListener("click", async (e)=>{
+    e.stopPropagation();
+    const ok = confirm(`タスク「${t.title}」を削除しますか？`);
+    if (!ok) return;
+    await sb.from('tasks').delete().eq('id', t.id);
+    await loadPhases();
+  });
+  item.addEventListener("click", (e)=>e.stopPropagation());
+  return item;
+}
+// アーカイブ済み一覧に出す行。チェックは完了状態を表示するだけ(操作不可)、
+// 「↩️」でアーカイブ解除、「🗑」で削除ができる。
+function buildArchivedTaskItemElement(t){
+  const item = document.createElement("div");
+  item.className = "task-item done";
+  item.dataset.taskId = t.id;
+  const phaseTagHtml = t.phaseName ? `<span class="assignee-tag" style="margin-right:6px;">${t.phaseName}</span>` : "";
+  item.innerHTML = `
+    <label class="task-item-main">
+      <input type="checkbox" checked disabled /><span>${t.title}</span>
+    </label>
+    ${phaseTagHtml}
+    <button class="delete-btn task-unarchive-btn" title="アーカイブを解除">↩️</button>
+    <button class="delete-btn task-delete-btn" title="このタスクを削除">🗑</button>`;
+  item.querySelector(".task-unarchive-btn").addEventListener("click", async (e)=>{
+    e.stopPropagation();
+    await sb.from('tasks').update({ archived: false }).eq('id', t.id);
     await loadPhases();
   });
   item.querySelector(".task-delete-btn").addEventListener("click", async (e)=>{
@@ -753,21 +793,21 @@ function renderProgress(){
       if(isOpen){
         const list = document.createElement("div");
         list.className = "task-list";
-        const activeTasks = tasks.filter(t => !t.done);
-        const doneTasks = tasks.filter(t => t.done);
-        activeTasks.forEach(t => list.appendChild(buildTaskItemElement(t)));
-        if (doneTasks.length > 0) {
+        const visibleTasks = tasks.filter(t => !t.archived);
+        const archivedTasks = tasks.filter(t => t.archived);
+        visibleTasks.forEach(t => list.appendChild(buildTaskItemElement(t)));
+        if (archivedTasks.length > 0) {
           const archiveDetails = document.createElement("details");
           archiveDetails.className = "usage-guide";
           archiveDetails.style.marginTop = "4px";
           archiveDetails.addEventListener("click", (e)=>e.stopPropagation());
           const archiveSummary = document.createElement("summary");
-          archiveSummary.textContent = `完了タスクを見る(${doneTasks.length}件)`;
+          archiveSummary.textContent = `アーカイブ済みを表示(${archivedTasks.length}件)`;
           archiveDetails.appendChild(archiveSummary);
           const archiveBody = document.createElement("div");
           archiveBody.className = "usage-content";
           archiveBody.style.marginTop = "8px";
-          doneTasks.forEach(t => archiveBody.appendChild(buildTaskItemElement(t)));
+          archivedTasks.forEach(t => archiveBody.appendChild(buildArchivedTaskItemElement(t)));
           archiveDetails.appendChild(archiveBody);
           list.appendChild(archiveDetails);
         }
