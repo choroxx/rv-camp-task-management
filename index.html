@@ -1,3 +1,5 @@
+
+Index fixed · HTML
 <!DOCTYPE html>
 <html lang="ja">
 <head>
@@ -517,6 +519,23 @@ function populateMyTasksMemberSelect(){
     `<option value="${m.slack_user_id}" ${m.slack_user_id === current ? 'selected' : ''}>${m.display_name}</option>`
   ).join('');
 }
+function myTaskItemHtml(t){
+  return `
+    <div class="my-task-item ${t.done ? 'done' : ''}" data-task-id="${t.id}">
+      <input type="checkbox" ${t.done ? 'checked' : ''} />
+      <span style="flex:1;">${t.title}</span>
+      <span class="my-task-phase-tag">${t.phaseName}</span>
+    </div>`;
+}
+function bindMyTaskCheckboxes(container){
+  container.querySelectorAll('.my-task-item input').forEach(input => {
+    input.addEventListener('change', async (e) => {
+      const taskId = e.target.closest('.my-task-item').dataset.taskId;
+      await sb.from('tasks').update({ done: e.target.checked }).eq('id', taskId);
+      await loadPhases();
+    });
+  });
+}
 function renderMyTasks(){
   const list = document.getElementById('my-tasks-list');
   const sel = document.getElementById('my-tasks-member-select');
@@ -532,24 +551,55 @@ function renderMyTasks(){
     list.innerHTML = `<p class="ask-log-empty">担当タスクはありません。</p>`;
     return;
   }
-  // 未完了を上、完了を下に並べる
-  myTasks.sort((a, b) => (a.done === b.done) ? 0 : (a.done ? 1 : -1));
-  list.innerHTML = myTasks.map(t => `
-    <div class="my-task-item ${t.done ? 'done' : ''}" data-task-id="${t.id}">
-      <input type="checkbox" ${t.done ? 'checked' : ''} />
-      <span style="flex:1;">${t.title}</span>
-      <span class="my-task-phase-tag">${t.phaseName}</span>
-    </div>
-  `).join('');
-  list.querySelectorAll('.my-task-item input').forEach(input => {
-    input.addEventListener('change', async (e) => {
-      const taskId = e.target.closest('.my-task-item').dataset.taskId;
-      await sb.from('tasks').update({ done: e.target.checked }).eq('id', taskId);
-      await loadPhases();
-    });
-  });
+  // 未完了はそのまま並べ、完了したものは「完了タスクを見る」の中にアーカイブする
+  const activeTasks = myTasks.filter(t => !t.done);
+  const doneTasks = myTasks.filter(t => t.done);
+  const activeHtml = activeTasks.length
+    ? activeTasks.map(myTaskItemHtml).join('')
+    : `<p class="ask-log-empty">未完了のタスクはありません。</p>`;
+  const archiveHtml = doneTasks.length
+    ? `<details class="usage-guide" style="margin-top:10px;">
+         <summary>完了タスクを見る(<span>${doneTasks.length}</span>件)</summary>
+         <div class="usage-content" style="margin-top:8px;">${doneTasks.map(myTaskItemHtml).join('')}</div>
+       </details>`
+    : '';
+  list.innerHTML = activeHtml + archiveHtml;
+  bindMyTaskCheckboxes(list);
 }
 document.getElementById('my-tasks-member-select').addEventListener('change', renderMyTasks);
+function buildTaskItemElement(t){
+  const item = document.createElement("div");
+  item.className = "task-item" + (t.done ? " done" : "");
+  item.dataset.taskId = t.id;
+  const memberOptions = `<option value="">担当者未定</option>` +
+    slackMembersCache.map(m => `<option value="${m.slack_user_id}" ${t.assignee_slack_id === m.slack_user_id ? "selected" : ""}>${m.display_name}</option>`).join("");
+  item.innerHTML = `
+    <label class="task-item-main">
+      <input type="checkbox" ${t.done ? "checked" : ""} /><span>${t.title}</span>
+    </label>
+    <select class="task-assignee-select">${memberOptions}</select>
+    <button class="delete-btn task-delete-btn" title="このタスクを削除">🗑</button>`;
+  item.querySelector("input").addEventListener("change", async (e)=>{
+    e.stopPropagation();
+    await sb.from('tasks').update({ done: e.target.checked }).eq('id', t.id);
+    await loadPhases();
+  });
+  item.querySelector(".task-assignee-select").addEventListener("click", (e)=>e.stopPropagation());
+  item.querySelector(".task-assignee-select").addEventListener("change", async (e)=>{
+    e.stopPropagation();
+    await sb.from('tasks').update({ assignee_slack_id: e.target.value || null }).eq('id', t.id);
+    await loadPhases();
+  });
+  item.querySelector(".task-delete-btn").addEventListener("click", async (e)=>{
+    e.stopPropagation();
+    const ok = confirm(`タスク「${t.title}」を削除しますか？`);
+    if (!ok) return;
+    await sb.from('tasks').delete().eq('id', t.id);
+    await loadPhases();
+  });
+  item.addEventListener("click", (e)=>e.stopPropagation());
+  return item;
+}
 function renderProgress(){
   const wrap = document.getElementById("phase-groups");
   wrap.innerHTML = "";
@@ -674,39 +724,24 @@ function renderProgress(){
       if(isOpen){
         const list = document.createElement("div");
         list.className = "task-list";
-        tasks.forEach((t)=>{
-          const item = document.createElement("div");
-          item.className = "task-item" + (t.done ? " done" : "");
-          item.dataset.taskId = t.id;
-          const memberOptions = `<option value="">担当者未定</option>` +
-            slackMembersCache.map(m => `<option value="${m.slack_user_id}" ${t.assignee_slack_id === m.slack_user_id ? "selected" : ""}>${m.display_name}</option>`).join("");
-          item.innerHTML = `
-            <label class="task-item-main">
-              <input type="checkbox" ${t.done ? "checked" : ""} /><span>${t.title}</span>
-            </label>
-            <select class="task-assignee-select">${memberOptions}</select>
-            <button class="delete-btn task-delete-btn" title="このタスクを削除">🗑</button>`;
-          item.querySelector("input").addEventListener("change", async (e)=>{
-            e.stopPropagation();
-            await sb.from('tasks').update({ done: e.target.checked }).eq('id', t.id);
-            await loadPhases();
-          });
-          item.querySelector(".task-assignee-select").addEventListener("click", (e)=>e.stopPropagation());
-          item.querySelector(".task-assignee-select").addEventListener("change", async (e)=>{
-            e.stopPropagation();
-            await sb.from('tasks').update({ assignee_slack_id: e.target.value || null }).eq('id', t.id);
-            await loadPhases();
-          });
-          item.querySelector(".task-delete-btn").addEventListener("click", async (e)=>{
-            e.stopPropagation();
-            const ok = confirm(`タスク「${t.title}」を削除しますか？`);
-            if (!ok) return;
-            await sb.from('tasks').delete().eq('id', t.id);
-            await loadPhases();
-          });
-          item.addEventListener("click", (e)=>e.stopPropagation());
-          list.appendChild(item);
-        });
+        const activeTasks = tasks.filter(t => !t.done);
+        const doneTasks = tasks.filter(t => t.done);
+        activeTasks.forEach(t => list.appendChild(buildTaskItemElement(t)));
+        if (doneTasks.length > 0) {
+          const archiveDetails = document.createElement("details");
+          archiveDetails.className = "usage-guide";
+          archiveDetails.style.marginTop = "4px";
+          archiveDetails.addEventListener("click", (e)=>e.stopPropagation());
+          const archiveSummary = document.createElement("summary");
+          archiveSummary.textContent = `完了タスクを見る(${doneTasks.length}件)`;
+          archiveDetails.appendChild(archiveSummary);
+          const archiveBody = document.createElement("div");
+          archiveBody.className = "usage-content";
+          archiveBody.style.marginTop = "8px";
+          doneTasks.forEach(t => archiveBody.appendChild(buildTaskItemElement(t)));
+          archiveDetails.appendChild(archiveBody);
+          list.appendChild(archiveDetails);
+        }
         // タスクをその場で追加する行(担当者はSlackメンバー一覧から選ぶ)
         const addRow = document.createElement("div");
         addRow.className = "task-add-row";
@@ -1437,3 +1472,5 @@ function jumpToTaskFromUrl(){
 </script>
 </body>
 </html>
+ 
+
