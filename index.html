@@ -121,6 +121,9 @@
   .task-hint{font-size:12px; color:var(--text-muted); margin:6px 0 0; font-style:italic;}
   .assignee-tag{font-size:11px; color:var(--accent); background:var(--surface-2); padding:2px 8px; border-radius:100px; white-space:nowrap;}
   .task-assignee-select{font-size:11px; padding:3px 6px; max-width:110px;}
+  .task-due-input{font-size:11px; padding:3px 6px; max-width:120px; color-scheme:dark; background:var(--surface-2); border:1px solid var(--border); color:var(--text); border-radius:8px; font-family:inherit;}
+  .task-item.overdue .task-item-main span{color:var(--danger);}
+  .task-due-input.overdue{border-color:var(--danger); color:var(--danger);}
   .countdown-banner{background:linear-gradient(135deg, var(--surface) 0%, var(--surface-2) 100%); border:1px solid var(--accent); border-radius:14px; padding:16px 20px; margin-bottom:20px; display:flex; align-items:baseline; justify-content:center; gap:10px; text-align:center; flex-wrap:wrap;}
   .countdown-banner .num{font-family:'Bebas Neue', sans-serif; font-size:44px; color:var(--accent); line-height:1;}
   .countdown-banner .time{font-family:'JetBrains Mono', monospace; font-size:26px; color:var(--accent); line-height:1;}
@@ -593,9 +596,15 @@ document.getElementById('my-tasks-head').addEventListener('click', () => {
 });
 document.getElementById('my-tasks-member-select').addEventListener('click', (e)=>e.stopPropagation());
 document.getElementById('my-tasks-member-select').addEventListener('change', renderMyTasks);
+// 今日の日付を YYYY-MM-DD で返す(due_dateの比較・input[type=date]の初期値に使う)
+function todayStr(){
+  return new Date().toISOString().slice(0,10);
+}
 function buildTaskItemElement(t){
   const item = document.createElement("div");
-  item.className = "task-item" + (t.done ? " done" : "");
+  // 期限切れ = 期限があり、未完了で、今日より前の日付
+  const isOverdue = !!(t.due_date && !t.done && t.due_date < todayStr());
+  item.className = "task-item" + (t.done ? " done" : "") + (isOverdue ? " overdue" : "");
   item.dataset.taskId = t.id;
   const memberOptions = `<option value="">担当者未定</option>` +
     slackMembersCache.map(m => `<option value="${m.slack_user_id}" ${t.assignee_slack_id === m.slack_user_id ? "selected" : ""}>${m.display_name}</option>`).join("");
@@ -608,10 +617,11 @@ function buildTaskItemElement(t){
       <input type="checkbox" ${t.done ? "checked" : ""} /><span>${t.title}</span>
     </label>
     ${phaseTagHtml}
+    <input type="date" class="task-due-input${isOverdue ? " overdue" : ""}" value="${t.due_date || ""}" title="期限(任意)" />
     <select class="task-assignee-select">${memberOptions}</select>
     ${archiveBtnHtml}
     <button class="delete-btn task-delete-btn" title="このタスクを削除">🗑</button>`;
-  item.querySelector("input").addEventListener("change", async (e)=>{
+  item.querySelector("input[type=checkbox]").addEventListener("change", async (e)=>{
     e.stopPropagation();
     await sb.from('tasks').update({ done: e.target.checked }).eq('id', t.id);
     await loadPhases();
@@ -624,6 +634,12 @@ function buildTaskItemElement(t){
       await loadPhases();
     });
   }
+  item.querySelector(".task-due-input").addEventListener("click", (e)=>e.stopPropagation());
+  item.querySelector(".task-due-input").addEventListener("change", async (e)=>{
+    e.stopPropagation();
+    await sb.from('tasks').update({ due_date: e.target.value || null }).eq('id', t.id);
+    await loadPhases();
+  });
   item.querySelector(".task-assignee-select").addEventListener("click", (e)=>e.stopPropagation());
   item.querySelector(".task-assignee-select").addEventListener("change", async (e)=>{
     e.stopPropagation();
@@ -818,19 +834,21 @@ function renderProgress(){
           slackMembersCache.map(m => `<option value="${m.slack_user_id}">${m.display_name}</option>`).join("");
         addRow.innerHTML = `
           <input type="text" class="new-task-input" placeholder="新しいタスクを追加" />
+          <input type="date" class="task-due-input new-task-due" title="期限(任意)" />
           <select class="task-assignee-select new-task-assignee">${newTaskMemberOptions}</select>
           <button class="task-add-btn">追加</button>`;
         addRow.addEventListener("click", (e)=>e.stopPropagation());
         addRow.querySelector(".task-add-btn").addEventListener("click", async (e)=>{
           e.stopPropagation();
           const input = addRow.querySelector(".new-task-input");
+          const dueInput = addRow.querySelector(".new-task-due");
           const assigneeSelect = addRow.querySelector(".new-task-assignee");
           const text = input.value.trim();
           if(!text) return;
           const btn = addRow.querySelector(".task-add-btn");
           btn.disabled = true;
           btn.textContent = "追加中…";
-          await addTaskToPhase(p.id, text, assigneeSelect.value || null);
+          await addTaskToPhase(p.id, text, assigneeSelect.value || null, dueInput.value || null);
         });
         list.appendChild(addRow);
         card.appendChild(list);
@@ -857,8 +875,8 @@ function populatePhaseChannelSelect(){
   const options = slackChannelsCache.map(c => `<option value="${c.slack_channel_id}">#${c.name}</option>`).join("");
   sel.innerHTML = `<option value="">Slackチャンネル(通知先・任意)</option>` + options;
 }
-async function addTaskToPhase(phaseId, text, assigneeSlackId){
-  await sb.from('tasks').insert({ phase_id: phaseId, title: text, assignee_slack_id: assigneeSlackId || null });
+async function addTaskToPhase(phaseId, text, assigneeSlackId, dueDate){
+  await sb.from('tasks').insert({ phase_id: phaseId, title: text, assignee_slack_id: assigneeSlackId || null, due_date: dueDate || null });
   expandedPhases.add(phaseId);
   await loadPhases();
 }
