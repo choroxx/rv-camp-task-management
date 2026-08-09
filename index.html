@@ -1,5 +1,3 @@
-
-Index fixed · HTML
 <!DOCTYPE html>
 <html lang="ja">
 <head>
@@ -225,27 +223,34 @@ Index fixed · HTML
     <details class="usage-guide">
       <summary>使い方を見る</summary>
       <div class="usage-content">
-        <p><b>進捗管理</b>: 「大項目(チーム/カテゴリ)」を追加し、その中に具体的な「タスク」を追加してチェックしていきます。上の「全体進捗」は、全部の大項目に含まれるタスクのうち、完了したものの割合です。</p>
-        <p><b>今日の進捗</b>: 今日やったことをここに投稿します。AIが内容にコメントを返し、他の人が♥で称賛できます。左のリストから項目を選ぶと、右側に詳細が表示されます。</p>
+        <p><b>タスク一覧</b>: プルダウンで選んだ人が担当してるタスクを、大項目を横断して一覧表示します(デフォルトは自分)。完了したタスクは「完了タスクを見る」に自動でまとまります。</p>
+        <p><b>進捗管理</b>: 「大項目(チーム/カテゴリ)」を追加し、その中に具体的な「タスク」を追加してチェックしていきます。完了したタスクは同様に折りたたみアーカイブされます。</p>
+        <p><b>今日の進捗</b>: 今日やったことを投稿します。AIが内容にコメントを返し、他の人が♥で称賛できます。左の一覧から項目を選ぶと右に詳細が表示され、キーワード・チャンネル・日付で絞り込み検索もできます。一番上の「今日の進捗まとめ」で、その日の全チャンネル分を一言ずつ確認できます。</p>
         <p><b>中崎コンシェルジュ（Q&A）</b>: 「今日の進捗」に投稿された内容をもとに、AIに自由に質問できます(例：「備品発注チームの進み具合は？」)。</p>
-        <p style="margin-top:4px; padding-top:8px; border-top:1px solid var(--border);">MVP(頑張った人)は現時点では自動集計ではなく、運営側が選んで登録する仕組みです。基準を自動化したい場合は運営に相談してください。</p>
+        <p style="margin-top:4px; padding-top:8px; border-top:1px solid var(--border);"><b>折衝・議事録ログ</b>: 外部との折衝や会議の議事録を検索できる別画面です(タブの隣のリンクから開きます)。</p>
       </div>
     </details>
-    <div class="my-tasks-card">
-      <div class="my-tasks-head">
-        <p class="my-tasks-title">タスク一覧</p>
-        <select id="my-tasks-member-select"></select>
+    <div class="phase-card">
+      <div class="phase-head" id="my-tasks-head" style="cursor:pointer;">
+        <div class="phase-top">
+          <span class="phase-name" id="my-tasks-heading">▾ タスク一覧</span>
+          <div class="phase-name-wrap">
+            <span class="badge" id="my-tasks-badge">-</span>
+            <select id="my-tasks-member-select" style="font-size:11px; padding:3px 6px; max-width:140px;"></select>
+          </div>
+        </div>
+        <div class="phase-bottom">
+          <div class="bar-track"><div class="bar-fill" id="my-tasks-bar-fill" style="width:0%;"></div></div>
+          <span class="mono" id="my-tasks-count" style="font-size:12px; color:var(--text-muted); min-width:36px; text-align:right;">0/0</span>
+        </div>
       </div>
-      <div id="my-tasks-list"></div>
+      <div class="task-list" id="my-tasks-list"></div>
     </div>
     <div class="stat-row" style="display:none;">
       <div class="stat-card"><p class="label">プログラム数</p><p class="value mono" id="phase-count">-</p></div>
       <div class="stat-card"><p class="label" title="全大項目のタスクのうち、完了したものの割合">全体進捗</p><p class="value mono" id="overall-pct">-</p></div>
       <div class="stat-card"><p class="label">本日の投稿</p><p class="value mono" id="today-count">-</p></div>
       <div class="stat-card" style="display:none;"><p class="label" title="「作業提案・Q&A」でステータスが「未対応」のままの件数。ステータスを変えると減ります">未対応の提案</p><p class="value mono" id="qa-pending-count">-</p></div>
-    </div>
-    <div class="mvp-pass" id="mvp-pass">
-      <p style="font-size:13px; color:var(--text-muted);">MVP読み込み中…</p>
     </div>
     <div class="tabs">
       <button class="tab-btn active" data-tab="progress">進捗管理</button>
@@ -519,26 +524,16 @@ function populateMyTasksMemberSelect(){
     `<option value="${m.slack_user_id}" ${m.slack_user_id === current ? 'selected' : ''}>${m.display_name}</option>`
   ).join('');
 }
-function myTaskItemHtml(t){
-  return `
-    <div class="my-task-item ${t.done ? 'done' : ''}" data-task-id="${t.id}">
-      <input type="checkbox" ${t.done ? 'checked' : ''} />
-      <span style="flex:1;">${t.title}</span>
-      <span class="my-task-phase-tag">${t.phaseName}</span>
-    </div>`;
-}
-function bindMyTaskCheckboxes(container){
-  container.querySelectorAll('.my-task-item input').forEach(input => {
-    input.addEventListener('change', async (e) => {
-      const taskId = e.target.closest('.my-task-item').dataset.taskId;
-      await sb.from('tasks').update({ done: e.target.checked }).eq('id', taskId);
-      await loadPhases();
-    });
-  });
-}
+// 大項目カード(phase-card)と全く同じ見た目・部品(進捗バー・バッジ・折りたたみ)で作る。
+// 中身のタスク行も buildTaskItemElement を使い回すので、挙動(チェック・担当変更・削除)も完全に共通。
+let myTasksExpanded = true;
 function renderMyTasks(){
   const list = document.getElementById('my-tasks-list');
   const sel = document.getElementById('my-tasks-member-select');
+  const badge = document.getElementById('my-tasks-badge');
+  const barFill = document.getElementById('my-tasks-bar-fill');
+  const countEl = document.getElementById('my-tasks-count');
+  const heading = document.getElementById('my-tasks-heading');
   if (!list || !sel) return;
   const targetId = sel.value || (currentUser ? currentUser.slack_user_id : '');
   const myTasks = [];
@@ -547,25 +542,56 @@ function renderMyTasks(){
       if (t.assignee_slack_id === targetId) myTasks.push({ ...t, phaseName: p.name });
     });
   });
-  if (myTasks.length === 0) {
-    list.innerHTML = `<p class="ask-log-empty">担当タスクはありません。</p>`;
+  const total = myTasks.length;
+  const done = myTasks.filter(t => t.done).length;
+  const pct = total ? Math.round(done / total * 100) : 0;
+  const s = statusInfo(pct);
+  if (badge) badge.className = "badge " + s.cls;
+  if (badge) badge.textContent = s.label;
+  if (barFill) { barFill.className = "bar-fill " + s.cls; barFill.style.width = pct + "%"; }
+  if (countEl) countEl.textContent = `${done}/${total}`;
+  if (heading) heading.textContent = (myTasksExpanded ? "▾" : "▸") + " タスク一覧";
+  list.style.display = myTasksExpanded ? "flex" : "none";
+  list.innerHTML = "";
+  if (total === 0) {
+    const empty = document.createElement("p");
+    empty.className = "ask-log-empty";
+    empty.textContent = "担当タスクはありません。";
+    list.appendChild(empty);
     return;
   }
   // 未完了はそのまま並べ、完了したものは「完了タスクを見る」の中にアーカイブする
   const activeTasks = myTasks.filter(t => !t.done);
   const doneTasks = myTasks.filter(t => t.done);
-  const activeHtml = activeTasks.length
-    ? activeTasks.map(myTaskItemHtml).join('')
-    : `<p class="ask-log-empty">未完了のタスクはありません。</p>`;
-  const archiveHtml = doneTasks.length
-    ? `<details class="usage-guide" style="margin-top:10px;">
-         <summary>完了タスクを見る(<span>${doneTasks.length}</span>件)</summary>
-         <div class="usage-content" style="margin-top:8px;">${doneTasks.map(myTaskItemHtml).join('')}</div>
-       </details>`
-    : '';
-  list.innerHTML = activeHtml + archiveHtml;
-  bindMyTaskCheckboxes(list);
+  if (activeTasks.length === 0) {
+    const empty = document.createElement("p");
+    empty.className = "ask-log-empty";
+    empty.textContent = "未完了のタスクはありません。";
+    list.appendChild(empty);
+  } else {
+    activeTasks.forEach(t => list.appendChild(buildTaskItemElement(t)));
+  }
+  if (doneTasks.length > 0) {
+    const archiveDetails = document.createElement("details");
+    archiveDetails.className = "usage-guide";
+    archiveDetails.style.marginTop = "4px";
+    archiveDetails.addEventListener("click", (e)=>e.stopPropagation());
+    const archiveSummary = document.createElement("summary");
+    archiveSummary.textContent = `完了タスクを見る(${doneTasks.length}件)`;
+    archiveDetails.appendChild(archiveSummary);
+    const archiveBody = document.createElement("div");
+    archiveBody.className = "usage-content";
+    archiveBody.style.marginTop = "8px";
+    doneTasks.forEach(t => archiveBody.appendChild(buildTaskItemElement(t)));
+    archiveDetails.appendChild(archiveBody);
+    list.appendChild(archiveDetails);
+  }
 }
+document.getElementById('my-tasks-head').addEventListener('click', () => {
+  myTasksExpanded = !myTasksExpanded;
+  renderMyTasks();
+});
+document.getElementById('my-tasks-member-select').addEventListener('click', (e)=>e.stopPropagation());
 document.getElementById('my-tasks-member-select').addEventListener('change', renderMyTasks);
 function buildTaskItemElement(t){
   const item = document.createElement("div");
@@ -573,10 +599,13 @@ function buildTaskItemElement(t){
   item.dataset.taskId = t.id;
   const memberOptions = `<option value="">担当者未定</option>` +
     slackMembersCache.map(m => `<option value="${m.slack_user_id}" ${t.assignee_slack_id === m.slack_user_id ? "selected" : ""}>${m.display_name}</option>`).join("");
+  // phaseNameが渡された時だけ(=横断表示の時だけ)、どのセクションのタスクか分かるタグを出す
+  const phaseTagHtml = t.phaseName ? `<span class="assignee-tag" style="margin-right:6px;">${t.phaseName}</span>` : "";
   item.innerHTML = `
     <label class="task-item-main">
       <input type="checkbox" ${t.done ? "checked" : ""} /><span>${t.title}</span>
     </label>
+    ${phaseTagHtml}
     <select class="task-assignee-select">${memberOptions}</select>
     <button class="delete-btn task-delete-btn" title="このタスクを削除">🗑</button>`;
   item.querySelector("input").addEventListener("change", async (e)=>{
@@ -1204,6 +1233,7 @@ async function loadMvp() {
     .limit(1)
     .maybeSingle();
   const wrap = document.getElementById('mvp-pass');
+  if (!wrap) return;
   if (error || !data) {
     wrap.innerHTML = `<p style="font-size:13px; color:var(--text-muted);">まだMVPが選出されていません。</p>`;
     return;
@@ -1472,5 +1502,3 @@ function jumpToTaskFromUrl(){
 </script>
 </body>
 </html>
- 
-
