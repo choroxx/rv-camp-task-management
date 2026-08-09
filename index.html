@@ -167,6 +167,21 @@
     .entry-layout{flex-direction:column;}
     .entry-list{border-right:none; border-bottom:1px solid var(--border); max-height:300px;}
     .entry-detail{width:100%; max-height:400px;}
+    /* タスク行: 幅が狭いと項目(担当者・期限・ボタン等)がタイトルを圧迫し、
+       日本語が1文字ずつ縦に折り返される崩れ方をするため、折り返し前提のレイアウトにする */
+    .task-item{flex-wrap:wrap; row-gap:6px;}
+    .task-item .task-item-main{flex:1 1 100%; width:100%;}
+    .task-due-input{flex:0 1 auto;}
+    .task-assignee-select{flex:1 1 auto; max-width:none;}
+    .task-add-row{flex-wrap:wrap;}
+    .task-add-row .new-task-input{flex:1 1 100%;}
+    .task-add-row .task-due-input,
+    .task-add-row .task-assignee-select,
+    .task-add-row .task-add-btn{flex:1 1 auto;}
+    /* 大項目カードの見出し行も同様に、名前が圧迫されないよう折り返す */
+    .phase-top{flex-wrap:wrap; row-gap:6px;}
+    .phase-top .phase-name,
+    .phase-top .phase-name-edit-wrap{flex:1 1 100%;}
   }
   .entry-searchbar{display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin-bottom:10px;}
   .entry-searchbar input[type="text"]{flex:1 1 200px;}
