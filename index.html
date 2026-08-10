@@ -70,11 +70,17 @@
   .badge.add{background:var(--info-bg); color:var(--info);}
   .badge.missing{background:var(--danger-bg); color:var(--danger);}
   .badge.option{background:var(--purple-bg); color:var(--purple);}
-  .bar-track{flex:1; height:12px; background:var(--surface-2); border-radius:6px; overflow:hidden;}
-  .bar-fill{height:100%;}
-  .bar-fill.done{background:var(--success);}
-  .bar-fill.doing{background:var(--info);}
+  .bar-track{flex:1; height:12px; background:var(--surface-2); border-radius:6px; overflow:hidden; box-shadow:inset 0 1px 3px rgba(0,0,0,0.35);}
+  .bar-fill{height:100%; border-radius:6px; transition:width 0.7s cubic-bezier(.34,1.2,.64,1);}
+  .bar-fill.done{background:linear-gradient(90deg, #3d9c6e, var(--success)); box-shadow:0 0 8px rgba(76,175,125,0.55);}
+  .bar-fill.doing{background:linear-gradient(90deg, #5578d8, var(--info)); box-shadow:0 0 8px rgba(108,142,242,0.55);}
   .bar-fill.todo{background:var(--border);}
+  /* 進捗率(%)を大きく目立たせる表示。件数は下に小さく添える */
+  .bar-pct{font-family:'JetBrains Mono', monospace; font-size:19px; font-weight:700; min-width:56px; text-align:right; line-height:1;}
+  .bar-pct.done{color:var(--success);}
+  .bar-pct.doing{color:var(--info);}
+  .bar-pct.todo{color:var(--text-muted);}
+  .bar-count{font-size:11px; color:var(--text-muted); text-align:right; margin-top:3px;}
   .phase-bottom{display:flex; align-items:center; gap:10px;}
   .task-list{border-top:1px solid var(--border); padding:10px 16px 14px; display:flex; flex-direction:column; gap:8px;}
   .task-item{display:flex; align-items:center; justify-content:space-between; gap:8px; font-size:13px;}
@@ -267,8 +273,9 @@
         </div>
         <div class="phase-bottom">
           <div class="bar-track"><div class="bar-fill" id="my-tasks-bar-fill" style="width:0%;"></div></div>
-          <span class="mono" id="my-tasks-count" style="font-size:12px; color:var(--text-muted); min-width:36px; text-align:right;">0/0</span>
+          <span class="bar-pct" id="my-tasks-pct">0%</span>
         </div>
+        <div class="bar-count mono" id="my-tasks-count">0/0件</div>
       </div>
       <div class="task-list" id="my-tasks-list"></div>
     </div>
@@ -561,6 +568,7 @@ function renderMyTasks(){
   const sel = document.getElementById('my-tasks-member-select');
   const badge = document.getElementById('my-tasks-badge');
   const barFill = document.getElementById('my-tasks-bar-fill');
+  const pctEl = document.getElementById('my-tasks-pct');
   const countEl = document.getElementById('my-tasks-count');
   const heading = document.getElementById('my-tasks-heading');
   const scopeBtn = document.getElementById('my-tasks-scope-toggle');
@@ -585,7 +593,8 @@ function renderMyTasks(){
   if (badge) badge.className = "badge " + s.cls;
   if (badge) badge.textContent = s.label;
   if (barFill) { barFill.className = "bar-fill " + s.cls; barFill.style.width = pct + "%"; }
-  if (countEl) countEl.textContent = `${done}/${total}`;
+  if (pctEl) { pctEl.className = "bar-pct " + s.cls; pctEl.textContent = pct + "%"; }
+  if (countEl) countEl.textContent = `${done}/${total}件`;
   if (heading) heading.textContent = (myTasksExpanded ? "▾" : "▸") + (showAll ? " 総ToDo一覧" : " タスク一覧");
   list.style.display = myTasksExpanded ? "flex" : "none";
   list.innerHTML = "";
@@ -782,9 +791,10 @@ function renderProgress(){
           </div>
         </div>
         <div class="phase-bottom">
-          <div class="bar-track"><div class="bar-fill ${s.cls}" style="width:${pct}%;"></div></div>
-          <span class="mono" style="font-size:12px; color:var(--text-muted); min-width:36px; text-align:right;">${done}/${total}</span>
+          <div class="bar-track"><div class="bar-fill ${s.cls}" style="width:0%;"></div></div>
+          <span class="bar-pct ${s.cls}">${pct}%</span>
         </div>
+        <div class="bar-count mono">${done}/${total}件</div>
         <div style="display:flex; align-items:center; gap:6px; margin-top:8px;">
           <span style="font-size:11px; color:var(--text-muted);">通知先チャンネル:</span>
           <select class="phase-channel-select" style="font-size:11px; padding:3px 6px; max-width:180px;">
@@ -792,6 +802,14 @@ function renderProgress(){
             ${slackChannelsCache.map(c => `<option value="${c.slack_channel_id}" ${p.slack_channel_id === c.slack_channel_id ? "selected" : ""}>#${c.name}</option>`).join("")}
           </select>
         </div>`;
+      // バーを0%から実際の進捗まで一気にアニメーションさせる(達成感の演出)。
+      // 2重requestAnimationFrameで「まず0%を描画させてから」次のフレームで目標幅に変える。
+      const barFillEl = head.querySelector(".bar-fill");
+      if (barFillEl) {
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => { barFillEl.style.width = pct + "%"; });
+        });
+      }
       head.querySelector(".phase-rename-btn").addEventListener("click", (e)=>{
         e.stopPropagation();
         renamingPhases.add(p.id);
