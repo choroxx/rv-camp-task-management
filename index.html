@@ -81,6 +81,14 @@
   .bar-pct.doing{color:var(--info);}
   .bar-pct.todo{color:var(--text-muted);}
   .bar-count{font-size:11px; color:var(--text-muted); text-align:right; margin-top:3px;}
+  /* 100%達成時の小さなお祝い演出 */
+  .celebrate-msg{font-size:12px; color:var(--success); font-weight:700; margin:8px 0 0; text-align:center;}
+  @keyframes celebrate-pop{
+    0%{transform:scale(0.7); opacity:0;}
+    60%{transform:scale(1.08); opacity:1;}
+    100%{transform:scale(1); opacity:1;}
+  }
+  .celebrate-pop{animation:celebrate-pop 0.5s ease-out;}
   .phase-bottom{display:flex; align-items:center; gap:10px;}
   .task-list{border-top:1px solid var(--border); padding:10px 16px 14px; display:flex; flex-direction:column; gap:8px;}
   .task-item{display:flex; align-items:center; justify-content:space-between; gap:8px; font-size:13px;}
@@ -276,6 +284,7 @@
           <span class="bar-pct" id="my-tasks-pct">0%</span>
         </div>
         <div class="bar-count mono" id="my-tasks-count">0/0件</div>
+        <p class="celebrate-msg" id="my-tasks-celebrate" style="display:none;">🎉 全部終わった！おつかれさまでした</p>
       </div>
       <div class="task-list" id="my-tasks-list"></div>
     </div>
@@ -593,7 +602,21 @@ function renderMyTasks(){
   if (badge) badge.className = "badge " + s.cls;
   if (badge) badge.textContent = s.label;
   if (barFill) { barFill.className = "bar-fill " + s.cls; barFill.style.width = pct + "%"; }
-  if (pctEl) { pctEl.className = "bar-pct " + s.cls; pctEl.textContent = pct + "%"; }
+  // 進捗に応じて変わる小さなバッジ(ゲーム性の演出)。ポイント制度は使わず%だけから算出する
+  const milestone = pct === 100 ? "🏆" : pct >= 80 ? "🚀" : pct >= 50 ? "🔥" : pct >= 1 ? "🐣" : "🌱";
+  if (pctEl) { pctEl.className = "bar-pct " + s.cls; pctEl.textContent = `${milestone} ${pct}%`; }
+  const celebrateEl = document.getElementById('my-tasks-celebrate');
+  if (celebrateEl) {
+    if (total > 0 && pct === 100) {
+      celebrateEl.style.display = "block";
+      celebrateEl.classList.remove("celebrate-pop");
+      void celebrateEl.offsetWidth; // 再生済みのアニメーションをもう一度発火させるための強制リフロー
+      celebrateEl.classList.add("celebrate-pop");
+    } else {
+      celebrateEl.style.display = "none";
+      celebrateEl.classList.remove("celebrate-pop");
+    }
+  }
   if (countEl) countEl.textContent = `${done}/${total}件`;
   if (heading) heading.textContent = (myTasksExpanded ? "▾" : "▸") + (showAll ? " 総ToDo一覧" : " タスク一覧");
   list.style.display = myTasksExpanded ? "flex" : "none";
